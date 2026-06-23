@@ -216,6 +216,10 @@ new #[Title('Families')] class extends Component {
                             <flux:button variant="primary" type="submit" wire:loading.attr="disabled">
                                 {{ __('Save settings') }}
                             </flux:button>
+
+                            <flux:button :href="route('family-invitations.index')" icon="envelope" wire:navigate>
+                                {{ __('Manage invitations') }}
+                            </flux:button>
                         </form>
                     @else
                         <div class="flex flex-col gap-2">

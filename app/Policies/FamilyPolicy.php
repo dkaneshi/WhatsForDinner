@@ -40,6 +40,14 @@ class FamilyPolicy
     }
 
     /**
+     * Determine whether the user can manage family invitations.
+     */
+    public function inviteMembers(User $user, Family $family): bool
+    {
+        return $family->isHead($user);
+    }
+
+    /**
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, Family $family): bool
