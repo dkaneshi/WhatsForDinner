@@ -1,0 +1,54 @@
+<?php
+
+namespace App\Models;
+
+use Database\Factories\FamilyFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Carbon;
+
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $timezone
+ * @property int $head_user_id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
+#[Fillable(['name', 'timezone', 'head_user_id'])]
+class Family extends Model
+{
+    /** @use HasFactory<FamilyFactory> */
+    use HasFactory;
+
+    /**
+     * Get the Head of the family.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function head(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'head_user_id');
+    }
+
+    /**
+     * Get the family's members.
+     *
+     * @return BelongsToMany<User, $this>
+     */
+    public function members(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
+
+    /**
+     * Determine whether the user is the Head of the family.
+     */
+    public function isHead(User $user): bool
+    {
+        return $this->head_user_id === $user->id;
+    }
+}

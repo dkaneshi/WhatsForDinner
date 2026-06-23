@@ -7,6 +7,8 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -17,6 +19,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
  * @property int $id
+ * @property int|null $current_family_id
  * @property string $name
  * @property string $email
  * @property Carbon|null $email_verified_at
@@ -46,6 +49,26 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Get the families this user belongs to.
+     *
+     * @return BelongsToMany<Family, $this>
+     */
+    public function families(): BelongsToMany
+    {
+        return $this->belongsToMany(Family::class)->withTimestamps();
+    }
+
+    /**
+     * Get the user's selected family.
+     *
+     * @return BelongsTo<Family, $this>
+     */
+    public function currentFamily(): BelongsTo
+    {
+        return $this->belongsTo(Family::class, 'current_family_id');
     }
 
     /**
