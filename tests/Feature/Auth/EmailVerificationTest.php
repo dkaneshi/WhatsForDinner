@@ -2,7 +2,9 @@
 
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use Laravel\Fortify\Features;
 
@@ -16,6 +18,32 @@ test('email verification screen can be rendered', function () {
     $response = $this->actingAs($user)->get(route('verification.notice'));
 
     $response->assertOk();
+});
+
+test('email verification notification can be resent', function () {
+    $user = User::factory()->unverified()->create();
+
+    Notification::fake();
+
+    $this->actingAs($user)
+        ->post(route('verification.send'))
+        ->assertRedirect();
+
+    Notification::assertSentTo($user, VerifyEmail::class);
+});
+
+test('email verification notification resends are throttled', function () {
+    $user = User::factory()->unverified()->create();
+
+    Notification::fake();
+
+    $this->actingAs($user);
+
+    foreach (range(1, 6) as $attempt) {
+        $this->post(route('verification.send'))->assertRedirect();
+    }
+
+    $this->post(route('verification.send'))->assertTooManyRequests();
 });
 
 test('email can be verified', function () {
