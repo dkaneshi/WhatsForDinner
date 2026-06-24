@@ -16,10 +16,11 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property string $timezone
  * @property int $head_user_id
+ * @property int|null $pending_head_user_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'timezone', 'head_user_id'])]
+#[Fillable(['name', 'timezone', 'head_user_id', 'pending_head_user_id'])]
 class Family extends Model
 {
     /** @use HasFactory<FamilyFactory> */
@@ -33,6 +34,16 @@ class Family extends Model
     public function head(): BelongsTo
     {
         return $this->belongsTo(User::class, 'head_user_id');
+    }
+
+    /**
+     * Get the member who has been offered the Head role.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function pendingHead(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pending_head_user_id');
     }
 
     /**

@@ -71,12 +71,6 @@ new #[Title('Profile settings')] class extends Component {
         return Auth::user() instanceof MustVerifyEmail && ! Auth::user()->hasVerifiedEmail();
     }
 
-    #[Computed]
-    public function showDeleteUser(): bool
-    {
-        return ! Auth::user() instanceof MustVerifyEmail
-            || (Auth::user() instanceof MustVerifyEmail && Auth::user()->hasVerifiedEmail());
-    }
     /* @end-chisel-email-verification */
 }; ?>
 
@@ -122,13 +116,5 @@ new #[Title('Profile settings')] class extends Component {
 
             </div>
         </form>
-
-        {{-- @chisel-email-verification --}}
-        @if ($this->showDeleteUser)
-        {{-- @end-chisel-email-verification --}}
-            <livewire:pages::settings.delete-user-form />
-        {{-- @chisel-email-verification --}}
-        @endif
-        {{-- @end-chisel-email-verification --}}
     </x-pages::settings.layout>
 </section>

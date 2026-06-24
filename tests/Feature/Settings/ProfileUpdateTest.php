@@ -9,6 +9,14 @@ test('profile page is displayed', function () {
     $this->get(route('profile.edit'))->assertOk();
 });
 
+test('account deletion controls remain unavailable', function () {
+    $this->actingAs(User::factory()->create());
+
+    $this->get(route('profile.edit'))
+        ->assertOk()
+        ->assertDontSee('Delete account');
+});
+
 test('profile information can be updated', function () {
     $user = User::factory()->create();
 

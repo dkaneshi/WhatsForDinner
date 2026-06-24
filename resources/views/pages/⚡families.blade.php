@@ -217,6 +217,10 @@ new #[Title('Families')] class extends Component {
                                 {{ __('Save settings') }}
                             </flux:button>
 
+                            <flux:button :href="route('family-members.index')" icon="user-group" wire:navigate>
+                                {{ __('Manage members') }}
+                            </flux:button>
+
                             <flux:button :href="route('family-invitations.index')" icon="envelope" wire:navigate>
                                 {{ __('Manage invitations') }}
                             </flux:button>
@@ -226,6 +230,9 @@ new #[Title('Families')] class extends Component {
                             <flux:heading>{{ $this->activeFamily->name }}</flux:heading>
                             <flux:text>{{ __('Time zone: :timezone', ['timezone' => $this->activeFamily->timezone]) }}</flux:text>
                             <flux:text>{{ __('Only the Head can change family settings.') }}</flux:text>
+                            <flux:button class="mt-4" :href="route('family-members.index')" icon="user-group" wire:navigate>
+                                {{ __('View members') }}
+                            </flux:button>
                         </div>
                     @endif
                 </flux:card>
