@@ -5,6 +5,8 @@ namespace App\Models;
 use App\ProteinCategory;
 use Database\Factories\DishFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $archived_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read Collection<int, Ingredient> $mainProtein
  */
 #[Fillable(['family_id', 'name', 'normalized_name', 'note', 'archived_at'])]
 class Dish extends Model
@@ -61,6 +64,27 @@ class Dish extends Model
 
     public function proteinCategory(): ?ProteinCategory
     {
-        return $this->mainProtein()->first()?->protein_category;
+        $mainProtein = $this->relationLoaded('mainProtein')
+            ? $this->mainProtein->first()
+            : $this->mainProtein()->first();
+
+        return $mainProtein?->protein_category;
+    }
+
+    public function isArchived(): bool
+    {
+        return ! is_null($this->archived_at);
+    }
+
+    /** @param  Builder<Dish>  $query */
+    public function scopeActive(Builder $query): void
+    {
+        $query->whereNull('archived_at');
+    }
+
+    /** @param  Builder<Dish>  $query */
+    public function scopeArchived(Builder $query): void
+    {
+        $query->whereNotNull('archived_at');
     }
 }

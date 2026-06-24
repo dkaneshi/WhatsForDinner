@@ -21,6 +21,9 @@
                     <flux:sidebar.item icon="list-bullet" :href="route('ingredients.index')" :current="request()->routeIs('ingredients.*')" wire:navigate>
                         {{ __('Ingredients') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="book-open" :href="route('dishes.index')" :current="request()->routeIs('dishes.*')" wire:navigate>
+                        {{ __('Dishes') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 
