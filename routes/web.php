@@ -6,6 +6,7 @@ Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::livewire('ingredients', 'pages::ingredients')->name('ingredients.index');
     Route::livewire('families', 'pages::families')->name('families.index');
     Route::livewire('families/members', 'pages::family-members')->name('family-members.index');
     Route::livewire('families/invitations', 'pages::family-invitations')->name('family-invitations.index');

@@ -66,6 +66,18 @@ class Family extends Model
         return $this->hasMany(FamilyInvitation::class);
     }
 
+    /** @return HasMany<Ingredient, $this> */
+    public function ingredients(): HasMany
+    {
+        return $this->hasMany(Ingredient::class);
+    }
+
+    /** @return HasMany<Dish, $this> */
+    public function dishes(): HasMany
+    {
+        return $this->hasMany(Dish::class);
+    }
+
     /**
      * Determine whether the user is the Head of the family.
      */
