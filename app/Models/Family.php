@@ -78,6 +78,12 @@ class Family extends Model
         return $this->hasMany(Dish::class);
     }
 
+    /** @return HasMany<WeeklyPlan, $this> */
+    public function weeklyPlans(): HasMany
+    {
+        return $this->hasMany(WeeklyPlan::class);
+    }
+
     /**
      * Determine whether the user is the Head of the family.
      */
