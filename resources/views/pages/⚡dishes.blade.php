@@ -292,9 +292,15 @@ new #[Title('Dishes')] class extends Component {
             <flux:text class="mt-2">{{ __('Build and maintain the dinner collection for :family.', ['family' => $this->activeFamily()->name]) }}</flux:text>
         </div>
 
-        <flux:button variant="primary" icon="plus" wire:click="startCreating" wire:loading.attr="disabled">
-            {{ __('Add dish') }}
-        </flux:button>
+        <div class="flex flex-wrap gap-2">
+            <flux:button :href="route('dishes.import')" wire:navigate>
+                {{ __('Import notes') }}
+            </flux:button>
+
+            <flux:button variant="primary" icon="plus" wire:click="startCreating" wire:loading.attr="disabled">
+                {{ __('Add dish') }}
+            </flux:button>
+        </div>
     </div>
 
     <flux:card class="grid gap-4 md:grid-cols-3">
