@@ -19,10 +19,13 @@ use Illuminate\Support\Carbon;
  * @property int $weekday
  * @property WeeklyPlanEntrySlot $slot
  * @property bool $is_leftovers
+ * @property string|null $dish_snapshot_name
+ * @property string|null $dish_snapshot_note
+ * @property array<int, array{name: string, is_main_protein: bool}>|null $dish_snapshot_ingredients
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['weekly_plan_id', 'dish_id', 'special_entry', 'weekday', 'slot', 'is_leftovers'])]
+#[Fillable(['weekly_plan_id', 'dish_id', 'special_entry', 'weekday', 'slot', 'is_leftovers', 'dish_snapshot_name', 'dish_snapshot_note', 'dish_snapshot_ingredients'])]
 class WeeklyPlanEntry extends Model
 {
     /** @use HasFactory<WeeklyPlanEntryFactory> */
@@ -39,6 +42,7 @@ class WeeklyPlanEntry extends Model
             'slot' => WeeklyPlanEntrySlot::class,
             'special_entry' => WeeklyPlanSpecialEntry::class,
             'is_leftovers' => 'boolean',
+            'dish_snapshot_ingredients' => 'array',
         ];
     }
 
@@ -60,10 +64,32 @@ class WeeklyPlanEntry extends Model
             return $this->special_entry->label();
         }
 
+        $dishName = $this->dish_snapshot_name ?? $this->dish?->name ?? __('Unscheduled');
+
         if ($this->is_leftovers) {
-            return __('Leftovers: :dish', ['dish' => $this->dish?->name]);
+            return __('Leftovers: :dish', ['dish' => $dishName]);
         }
 
-        return $this->dish?->name ?? __('Unscheduled');
+        return $dishName;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function ingredientNames(): array
+    {
+        if (is_array($this->dish_snapshot_ingredients)) {
+            return collect($this->dish_snapshot_ingredients)
+                ->pluck('name')
+                ->filter()
+                ->values()
+                ->all();
+        }
+
+        return $this->dish?->ingredients
+            ->sortBy('name')
+            ->pluck('name')
+            ->values()
+            ->all() ?? [];
     }
 }

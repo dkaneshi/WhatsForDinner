@@ -2,6 +2,7 @@
 
 namespace App\Actions\Ingredients;
 
+use App\Actions\WeeklyPlans\RefreshWeeklyPlanEntrySnapshots;
 use App\Models\Ingredient;
 use App\Models\User;
 use App\ProteinCategory;
@@ -13,7 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class UpdateIngredient
 {
-    public function __construct(private NormalizeIngredientName $normalizeIngredientName) {}
+    public function __construct(
+        private NormalizeIngredientName $normalizeIngredientName,
+        private RefreshWeeklyPlanEntrySnapshots $refreshWeeklyPlanEntrySnapshots,
+    ) {}
 
     /**
      * Update the shared ingredient used by every connected dish.
@@ -50,6 +54,8 @@ class UpdateIngredient
                 ...$name,
                 'protein_category' => $validated['protein_category'] ?? null,
             ]);
+
+            $this->refreshWeeklyPlanEntrySnapshots->forIngredient($lockedIngredient);
         }, attempts: 3);
     }
 }

@@ -13,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 class ScheduleWeeklyPlanEntry
 {
+    public function __construct(private RefreshWeeklyPlanEntrySnapshots $refreshWeeklyPlanEntrySnapshots) {}
+
     /**
      * Schedule one weekly dinner entry.
      */
@@ -104,13 +106,18 @@ class ScheduleWeeklyPlanEntry
             ]);
         }
 
-        return $weeklyPlan->entries()->create([
+        $entry = $weeklyPlan->entries()->create([
             'dish_id' => $dish->id,
             'special_entry' => null,
             'weekday' => $weekday,
             'slot' => $slot,
             'is_leftovers' => $isLeftovers ?? $this->defaultsToLeftovers($weeklyPlan, $dish, $weekday),
         ]);
+
+        $entry->setRelation('dish', $dish);
+        $this->refreshWeeklyPlanEntrySnapshots->forEntry($entry);
+
+        return $entry->refresh();
     }
 
     private function defaultsToLeftovers(WeeklyPlan $weeklyPlan, Dish $dish, int $weekday): bool

@@ -373,6 +373,10 @@ new #[Title('Weekly Plan')] class extends Component {
                                     <div class="flex flex-col gap-2">
                                         <flux:text>{{ $mainEntry->label() }}</flux:text>
 
+                                        @if ($mainEntry->ingredientNames() !== [])
+                                            <flux:text class="text-sm">{{ __('Ingredients: :ingredients', ['ingredients' => collect($mainEntry->ingredientNames())->join(', ')]) }}</flux:text>
+                                        @endif
+
                                         <div class="flex flex-wrap gap-2">
                                             @if (! $isPast && $mainEntry->is_leftovers)
                                                 <flux:button size="sm" variant="ghost" wire:click="markFresh({{ $mainEntry->id }})" wire:loading.attr="disabled">
@@ -434,6 +438,10 @@ new #[Title('Weekly Plan')] class extends Component {
                                 @if ($alternativeEntry)
                                     <div class="flex flex-col gap-2">
                                         <flux:text>{{ $alternativeEntry->label() }}</flux:text>
+
+                                        @if ($alternativeEntry->ingredientNames() !== [])
+                                            <flux:text class="text-sm">{{ __('Ingredients: :ingredients', ['ingredients' => collect($alternativeEntry->ingredientNames())->join(', ')]) }}</flux:text>
+                                        @endif
 
                                         <div class="flex flex-wrap gap-2">
                                             @if (! $isPast && $alternativeEntry->is_leftovers)

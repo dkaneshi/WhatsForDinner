@@ -2,6 +2,7 @@
 
 namespace App\Actions\Dishes;
 
+use App\Actions\WeeklyPlans\RefreshWeeklyPlanEntrySnapshots;
 use App\Models\Dish;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,7 @@ class UpdateDish
     public function __construct(
         private ValidateDishAttributes $validateDishAttributes,
         private SyncDishIngredients $syncDishIngredients,
+        private RefreshWeeklyPlanEntrySnapshots $refreshWeeklyPlanEntrySnapshots,
     ) {}
 
     /**
@@ -52,6 +54,8 @@ class UpdateDish
                 $validated['ingredient_ids'],
                 $validated['main_protein_ingredient_id'],
             );
+
+            $this->refreshWeeklyPlanEntrySnapshots->forDish($lockedDish);
         }, attempts: 3);
     }
 }
