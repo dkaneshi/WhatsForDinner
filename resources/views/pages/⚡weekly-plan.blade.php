@@ -2,12 +2,18 @@
 
 use App\Actions\Families\ResolveActiveFamily;
 use App\Actions\WeeklyPlans\FindOrCreateWeeklyPlan;
+use App\Actions\WeeklyPlans\RegenerateWeeklyPlanSuggestions;
 use App\Actions\WeeklyPlans\ResolveWeeklyPlanWeek;
+use App\Models\Dish;
 use App\Models\Family;
 use App\Models\User;
+use App\Models\WeeklyPlan;
+use Flux\Flux;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -49,6 +55,18 @@ new #[Title('Weekly Plan')] class extends Component {
         $this->weeklyPlanId = $weeklyPlan->id;
         $this->weekStartDate = $week->toDateString();
         $this->isPast = $resolveWeeklyPlanWeek->isPastWeek($family, $week);
+
+        if (! $this->isPast && $weeklyPlan->suggestions()->doesntExist()) {
+            app(RegenerateWeeklyPlanSuggestions::class)->execute($this->user(), $weeklyPlan);
+        }
+    }
+
+    public function regenerateSuggestions(RegenerateWeeklyPlanSuggestions $regenerateWeeklyPlanSuggestions): void
+    {
+        $regenerateWeeklyPlanSuggestions->execute($this->user(), $this->weeklyPlan());
+        unset($this->suggestedDishes);
+
+        Flux::toast(variant: 'success', text: __('Suggestions regenerated.'));
     }
 
     public function previousWeekUrl(): string
@@ -92,6 +110,19 @@ new #[Title('Weekly Plan')] class extends Component {
         return $weekStart->format('M j').'–'.$weekEnd->format('M j, Y');
     }
 
+    /**
+     * @return Collection<int, Dish>
+     */
+    #[Computed]
+    public function suggestedDishes(): Collection
+    {
+        return $this->weeklyPlan()
+            ->suggestions()
+            ->with(['dish.ingredients' => fn ($query) => $query->orderBy('name'), 'dish.mainProtein'])
+            ->get()
+            ->map(fn ($suggestion): Dish => $suggestion->dish);
+    }
+
     private function weekStart(): Carbon
     {
         return Carbon::parse($this->weekStartDate, $this->activeFamily()->timezone)->startOfDay();
@@ -100,6 +131,11 @@ new #[Title('Weekly Plan')] class extends Component {
     private function activeFamily(): Family
     {
         return $this->user()->families()->findOrFail($this->activeFamilyId);
+    }
+
+    private function weeklyPlan(): WeeklyPlan
+    {
+        return $this->activeFamily()->weeklyPlans()->findOrFail($this->weeklyPlanId);
     }
 
     private function user(): User
@@ -147,11 +183,53 @@ new #[Title('Weekly Plan')] class extends Component {
             </div>
         </div>
 
-        <div class="rounded-xl border border-dashed border-zinc-300 p-5 dark:border-zinc-700">
-            <flux:text class="font-medium">{{ __('Dinner scheduling comes next.') }}</flux:text>
-            <flux:text class="mt-1">
-                {{ __('This weekly plan record exists now, so suggestions and dinner slots can attach to it in the next implementation specs.') }}
-            </flux:text>
+        <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <flux:heading>{{ __('Suggestions') }}</flux:heading>
+                    <flux:text>{{ __('Ten balanced ideas when your dish collection has enough options.') }}</flux:text>
+                </div>
+
+                @if (! $isPast)
+                    <flux:button wire:click="regenerateSuggestions" wire:loading.attr="disabled">
+                        {{ __('Regenerate suggestions') }}
+                    </flux:button>
+                @endif
+            </div>
+
+            @if ($this->suggestedDishes->isEmpty())
+                <div class="rounded-xl border border-dashed border-zinc-300 p-5 dark:border-zinc-700">
+                    <flux:text class="font-medium">{{ __('No suggestions yet.') }}</flux:text>
+                    <flux:text class="mt-1">
+                        {{ __('Add active dishes with main protein categories to build balanced suggestions.') }}
+                    </flux:text>
+                </div>
+            @else
+                <div class="grid gap-4 md:grid-cols-2">
+                    @foreach ($this->suggestedDishes as $dish)
+                        <flux:card wire:key="suggestion-{{ $dish->id }}" class="flex flex-col gap-4">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <flux:heading>{{ $dish->name }}</flux:heading>
+
+                                    @if ($dish->proteinCategory())
+                                        <flux:badge class="mt-2">{{ $dish->proteinCategory()->label() }}</flux:badge>
+                                    @endif
+                                </div>
+                            </div>
+
+                            @if ($dish->note)
+                                <flux:text>{{ $dish->note }}</flux:text>
+                            @endif
+
+                            <div>
+                                <flux:text class="font-medium">{{ __('Ingredients') }}</flux:text>
+                                <flux:text>{{ $dish->ingredients->pluck('name')->join(', ') }}</flux:text>
+                            </div>
+                        </flux:card>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </flux:card>
 </div>

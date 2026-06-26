@@ -78,6 +78,25 @@ test('past plans reject mutations while current plans are editable', function ()
     Carbon::setTestNow();
 });
 
+test('current week plans remain editable when stored dates are cast in utc', function () {
+    Carbon::setTestNow(Carbon::parse('2026-06-26 06:00:00', 'UTC'));
+
+    $head = User::factory()->create();
+    $family = Family::factory()->for($head, 'head')->create(['timezone' => 'Pacific/Honolulu']);
+    $plan = WeeklyPlan::factory()->for($family)->create([
+        'week_start_date' => '2026-06-22',
+    ]);
+
+    app(EnsureWeeklyPlanIsEditable::class)->execute($head, $plan);
+
+    $this->actingAs($head)
+        ->get(route('weekly-plans.show'))
+        ->assertSuccessful()
+        ->assertSee('Editable');
+
+    Carbon::setTestNow();
+});
+
 test('first visit creates only one plan across repeated requests', function () {
     Carbon::setTestNow(Carbon::parse('2026-06-29 12:00:00', 'UTC'));
 

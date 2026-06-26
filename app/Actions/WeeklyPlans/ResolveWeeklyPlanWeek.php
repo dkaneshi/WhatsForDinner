@@ -53,6 +53,9 @@ class ResolveWeeklyPlanWeek
 
     public function isPastWeek(Family $family, CarbonInterface $weekStart, ?CarbonInterface $now = null): bool
     {
-        return $weekStart->copy()->startOfDay()->lt($this->currentWeekStart($family, $now));
+        $familyWeekStart = Carbon::createFromFormat('Y-m-d', $weekStart->toDateString(), $family->timezone)
+            ->startOfDay();
+
+        return $familyWeekStart->lt($this->currentWeekStart($family, $now));
     }
 }
