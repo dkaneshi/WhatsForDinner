@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\WeeklyPlanEntrySlot;
 use Database\Factories\WeeklyPlanFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -51,5 +52,13 @@ class WeeklyPlan extends Model
     public function entries(): HasMany
     {
         return $this->hasMany(WeeklyPlanEntry::class);
+    }
+
+    public function isComplete(): bool
+    {
+        return $this->entries()
+            ->where('slot', WeeklyPlanEntrySlot::Main)
+            ->distinct('weekday')
+            ->count('weekday') === 5;
     }
 }

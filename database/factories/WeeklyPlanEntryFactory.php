@@ -6,6 +6,7 @@ use App\Models\Dish;
 use App\Models\WeeklyPlan;
 use App\Models\WeeklyPlanEntry;
 use App\WeeklyPlanEntrySlot;
+use App\WeeklyPlanSpecialEntry;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -33,6 +34,26 @@ class WeeklyPlanEntryFactory extends Factory
     {
         return $this->state(fn (): array => [
             'slot' => WeeklyPlanEntrySlot::Alternative,
+        ]);
+    }
+
+    public function eatOut(): static
+    {
+        return $this->state(fn (): array => [
+            'dish_id' => null,
+            'special_entry' => WeeklyPlanSpecialEntry::EatOut,
+            'slot' => WeeklyPlanEntrySlot::Main,
+            'is_leftovers' => false,
+        ]);
+    }
+
+    public function tvDinnerNight(): static
+    {
+        return $this->state(fn (): array => [
+            'dish_id' => null,
+            'special_entry' => WeeklyPlanSpecialEntry::TvDinnerNight,
+            'slot' => WeeklyPlanEntrySlot::Main,
+            'is_leftovers' => false,
         ]);
     }
 }
