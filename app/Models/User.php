@@ -58,7 +58,9 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
      */
     public function families(): BelongsToMany
     {
-        return $this->belongsToMany(Family::class)->withTimestamps();
+        return $this->belongsToMany(Family::class)
+            ->withPivot('onboarding_checklist_dismissed_at')
+            ->withTimestamps();
     }
 
     /**

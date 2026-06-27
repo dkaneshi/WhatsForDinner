@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::livewire('dashboard', 'pages::dashboard')->name('dashboard');
     Route::livewire('plans/{weekStart?}', 'pages::weekly-plan')->name('weekly-plans.show');
     Route::livewire('groceries/{weekStart?}', 'pages::grocery-list')->name('grocery-lists.show');
     Route::livewire('dishes', 'pages::dishes')->name('dishes.index');
