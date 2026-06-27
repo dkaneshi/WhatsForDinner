@@ -70,17 +70,19 @@ class RefreshWeeklyPlanEntrySnapshots
     {
         $dish->loadMissing('ingredients');
 
+        $ingredients = $dish->ingredients
+            ->sortBy('name')
+            ->values()
+            ->map(fn (Ingredient $ingredient): array => [
+                'name' => $ingredient->name,
+                'is_main_protein' => (bool) data_get($ingredient, 'pivot.is_main_protein'),
+            ])
+            ->all();
+
         return [
             'dish_snapshot_name' => $dish->name,
             'dish_snapshot_note' => $dish->note,
-            'dish_snapshot_ingredients' => $dish->ingredients
-                ->sortBy('name')
-                ->values()
-                ->map(fn ($ingredient): array => [
-                    'name' => $ingredient->name,
-                    'is_main_protein' => (bool) $ingredient->pivot->is_main_protein,
-                ])
-                ->all(),
+            'dish_snapshot_ingredients' => array_values($ingredients),
         ];
     }
 }

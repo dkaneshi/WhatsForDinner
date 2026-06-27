@@ -72,7 +72,7 @@ class ReconcileGroceryList
      */
     public function requiredItems(WeeklyPlan $weeklyPlan): Collection
     {
-        return $weeklyPlan->entries()
+        $items = $weeklyPlan->entries()
             ->with('dish')
             ->whereNotNull('dish_id')
             ->get()
@@ -99,5 +99,19 @@ class ReconcileGroceryList
                 ];
             })
             ->sortKeys();
+
+        return $items->mapWithKeys(fn (array $item, string $normalizedName): array => [
+            $normalizedName => [
+                'name' => (string) $item['name'],
+                'source_entry_ids' => array_values(array_map(
+                    fn (mixed $entryId): int => (int) $entryId,
+                    $item['source_entry_ids'],
+                )),
+                'source_labels' => array_values(array_map(
+                    fn (mixed $sourceLabel): string => (string) $sourceLabel,
+                    $item['source_labels'],
+                )),
+            ],
+        ]);
     }
 }

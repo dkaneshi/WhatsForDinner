@@ -64,7 +64,7 @@ class WeeklyPlanEntry extends Model
             return $this->special_entry->label();
         }
 
-        $dishName = $this->dish_snapshot_name ?? $this->dish?->name ?? __('Unscheduled');
+        $dishName = $this->dish_snapshot_name ?? $this->dish->name ?? __('Unscheduled');
 
         if ($this->is_leftovers) {
             return __('Leftovers: :dish', ['dish' => $dishName]);
@@ -79,17 +79,22 @@ class WeeklyPlanEntry extends Model
     public function ingredientNames(): array
     {
         if (is_array($this->dish_snapshot_ingredients)) {
-            return collect($this->dish_snapshot_ingredients)
-                ->pluck('name')
-                ->filter()
-                ->values()
-                ->all();
+            return array_values(array_filter(
+                array_map(
+                    fn (array $ingredient): string => $ingredient['name'],
+                    $this->dish_snapshot_ingredients,
+                ),
+            ));
         }
 
-        return $this->dish?->ingredients
+        if (! $this->dish instanceof Dish) {
+            return [];
+        }
+
+        return array_values($this->dish->ingredients
             ->sortBy('name')
-            ->pluck('name')
+            ->map(fn (Ingredient $ingredient): string => $ingredient->name)
             ->values()
-            ->all() ?? [];
+            ->all());
     }
 }

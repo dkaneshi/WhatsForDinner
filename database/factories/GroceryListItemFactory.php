@@ -19,7 +19,7 @@ class GroceryListItemFactory extends Factory
      */
     public function definition(): array
     {
-        $name = fake()->unique()->words(2, asText: true);
+        $name = fake()->unique()->word().' '.fake()->unique()->word();
 
         return [
             'grocery_list_id' => GroceryList::factory(),
