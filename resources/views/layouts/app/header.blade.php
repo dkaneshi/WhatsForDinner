@@ -19,6 +19,9 @@
                 <flux:navbar.item icon="calendar-days" :href="route('weekly-plans.show')" :current="request()->routeIs('weekly-plans.*')" wire:navigate>
                     {{ __('Plan') }}
                 </flux:navbar.item>
+                <flux:navbar.item icon="shopping-cart" :href="route('grocery-lists.show')" :current="request()->routeIs('grocery-lists.*')" wire:navigate>
+                    {{ __('Groceries') }}
+                </flux:navbar.item>
                 <flux:navbar.item icon="list-bullet" :href="route('ingredients.index')" :current="request()->routeIs('ingredients.*')" wire:navigate>
                     {{ __('Ingredients') }}
                 </flux:navbar.item>
@@ -73,6 +76,9 @@
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="calendar-days" :href="route('weekly-plans.show')" :current="request()->routeIs('weekly-plans.*')" wire:navigate>
                         {{ __('Plan') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="shopping-cart" :href="route('grocery-lists.show')" :current="request()->routeIs('grocery-lists.*')" wire:navigate>
+                        {{ __('Groceries') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="list-bullet" :href="route('ingredients.index')" :current="request()->routeIs('ingredients.*')" wire:navigate>
                         {{ __('Ingredients') }}

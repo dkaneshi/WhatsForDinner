@@ -7,6 +7,7 @@ Route::view('/', 'welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
     Route::livewire('plans/{weekStart?}', 'pages::weekly-plan')->name('weekly-plans.show');
+    Route::livewire('groceries/{weekStart?}', 'pages::grocery-list')->name('grocery-lists.show');
     Route::livewire('dishes', 'pages::dishes')->name('dishes.index');
     Route::livewire('dishes/import', 'pages::dish-import')->name('dishes.import');
     Route::livewire('ingredients', 'pages::ingredients')->name('ingredients.index');

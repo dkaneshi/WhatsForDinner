@@ -2,6 +2,7 @@
 
 namespace App\Actions\WeeklyPlans;
 
+use App\Actions\GroceryLists\ReconcileGroceryList;
 use App\Models\Dish;
 use App\Models\User;
 use App\Models\WeeklyPlan;
@@ -13,7 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class ScheduleWeeklyPlanEntry
 {
-    public function __construct(private RefreshWeeklyPlanEntrySnapshots $refreshWeeklyPlanEntrySnapshots) {}
+    public function __construct(
+        private RefreshWeeklyPlanEntrySnapshots $refreshWeeklyPlanEntrySnapshots,
+        private ReconcileGroceryList $reconcileGroceryList,
+    ) {}
 
     /**
      * Schedule one weekly dinner entry.
@@ -78,13 +82,17 @@ class ScheduleWeeklyPlanEntry
             ]);
         }
 
-        return $weeklyPlan->entries()->create([
+        $entry = $weeklyPlan->entries()->create([
             'dish_id' => null,
             'special_entry' => $specialEntry,
             'weekday' => $weekday,
             'slot' => $slot,
             'is_leftovers' => false,
         ]);
+
+        $this->reconcileGroceryList->execute($weeklyPlan);
+
+        return $entry;
     }
 
     private function scheduleDish(
@@ -116,6 +124,7 @@ class ScheduleWeeklyPlanEntry
 
         $entry->setRelation('dish', $dish);
         $this->refreshWeeklyPlanEntrySnapshots->forEntry($entry);
+        $this->reconcileGroceryList->execute($weeklyPlan);
 
         return $entry->refresh();
     }

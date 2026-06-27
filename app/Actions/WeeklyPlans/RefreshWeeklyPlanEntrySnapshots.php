@@ -2,6 +2,7 @@
 
 namespace App\Actions\WeeklyPlans;
 
+use App\Actions\GroceryLists\ReconcileGroceryList;
 use App\Models\Dish;
 use App\Models\Ingredient;
 use App\Models\WeeklyPlanEntry;
@@ -9,7 +10,10 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class RefreshWeeklyPlanEntrySnapshots
 {
-    public function __construct(private ResolveWeeklyPlanWeek $resolveWeeklyPlanWeek) {}
+    public function __construct(
+        private ResolveWeeklyPlanWeek $resolveWeeklyPlanWeek,
+        private ReconcileGroceryList $reconcileGroceryList,
+    ) {}
 
     /**
      * Refresh snapshots for current and future entries using this dish.
@@ -22,12 +26,18 @@ class RefreshWeeklyPlanEntrySnapshots
             ->with(['weeklyPlan.family', 'dish.ingredients'])
             ->get();
 
-        $entries
+        $activeEntries = $entries
             ->reject(fn (WeeklyPlanEntry $entry): bool => $this->resolveWeeklyPlanWeek->isPastWeek(
                 $entry->weeklyPlan->family,
                 $entry->weeklyPlan->week_start_date,
-            ))
-            ->each(fn (WeeklyPlanEntry $entry): bool => $this->forEntry($entry));
+            ));
+
+        $activeEntries->each(fn (WeeklyPlanEntry $entry): bool => $this->forEntry($entry));
+
+        $activeEntries
+            ->pluck('weeklyPlan')
+            ->unique('id')
+            ->each(fn ($weeklyPlan) => $this->reconcileGroceryList->execute($weeklyPlan));
     }
 
     /**
