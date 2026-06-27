@@ -160,7 +160,7 @@ new #[Title('Grocery List')] class extends Component {
             ->items()
             ->where('is_suppressed', false)
             ->orderBy('is_checked')
-            ->orderBy('name')
+            ->orderBy('normalized_name')
             ->get();
     }
 
@@ -185,7 +185,7 @@ new #[Title('Grocery List')] class extends Component {
         return $this->groceryList()
             ->items()
             ->where('is_suppressed', true)
-            ->orderBy('name')
+            ->orderBy('normalized_name')
             ->get();
     }
 
@@ -314,9 +314,21 @@ new #[Title('Grocery List')] class extends Component {
                 <div class="mt-4 flex flex-col divide-y divide-zinc-200 dark:divide-zinc-700">
                     @foreach ($this->completedItems as $item)
                         <div wire:key="completed-grocery-item-{{ $item->id }}" class="flex items-center justify-between gap-4 py-3">
-                            <div class="flex items-center gap-3">
+                            <div class="flex min-w-0 flex-1 items-start gap-3">
                                 <flux:checkbox :checked="$item->is_checked" wire:click="toggleItem({{ $item->id }})" :disabled="$isPast" />
-                                <flux:text class="line-through opacity-70">{{ $item->name }}</flux:text>
+
+                                <div class="min-w-0">
+                                    <flux:text class="line-through opacity-70">{{ $item->name }}</flux:text>
+
+                                    @if ($item->is_manual)
+                                        <flux:badge class="mt-2" color="zinc">{{ __('Manual') }}</flux:badge>
+                                    @elseif ($item->source_labels)
+                                        <details class="mt-2">
+                                            <summary class="cursor-pointer text-sm text-zinc-600 dark:text-zinc-300">{{ __('Used by dinners') }}</summary>
+                                            <flux:text class="mt-1 text-sm">{{ collect($item->source_labels)->join(', ') }}</flux:text>
+                                        </details>
+                                    @endif
+                                </div>
                             </div>
 
                             @if (! $isPast)

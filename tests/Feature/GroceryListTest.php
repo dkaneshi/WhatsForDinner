@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\WeeklyPlan;
 use App\ProteinCategory;
 use App\WeeklyPlanEntrySlot;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 
@@ -220,6 +221,109 @@ test('grocery route renders the active family grocery list', function () {
         ->assertSuccessful()
         ->assertSee('Grocery list')
         ->assertSee($family->name);
+
+    Carbon::setTestNow();
+});
+
+test('grocery page actions persist checked manual removed and restored state', function () {
+    [$head, $family, $plan] = groceryFixture();
+    $this->actingAs($head);
+    $dish = groceryDish($family, 'Dinner', ['Chicken', 'Apples']);
+    app(ScheduleWeeklyPlanEntry::class)->execute($head, $plan, 1, WeeklyPlanEntrySlot::Main, dish: $dish);
+    $apples = $plan->groceryList->items()->where('normalized_name', 'apples')->sole();
+
+    Livewire::actingAs($head)
+        ->test('pages::grocery-list')
+        ->call('toggleItem', $apples->id)
+        ->set('manualItemName', ' Paper Towels ')
+        ->call('addManualItem')
+        ->assertSet('manualItemName', '');
+
+    $manualItem = $plan->groceryList->items()->where('normalized_name', 'paper towels')->sole();
+
+    expect($apples->fresh()->is_checked)->toBeTrue()
+        ->and($manualItem->is_manual)->toBeTrue()
+        ->and($manualItem->name)->toBe('Paper Towels');
+
+    Livewire::actingAs($head)
+        ->test('pages::grocery-list')
+        ->call('toggleItem', $apples->id)
+        ->call('removeItem', $manualItem->id)
+        ->call('removeItem', $apples->id);
+
+    expect($apples->fresh()->is_checked)->toBeFalse()
+        ->and($apples->fresh()->is_suppressed)->toBeTrue()
+        ->and($manualItem->fresh())->toBeNull();
+
+    Livewire::actingAs($head)
+        ->test('pages::grocery-list')
+        ->call('restoreItem', $apples->id);
+
+    expect($apples->fresh()->is_suppressed)->toBeFalse()
+        ->and($apples->fresh()->is_checked)->toBeFalse();
+
+    Carbon::setTestNow();
+});
+
+test('grocery page shows generated source dishes and manual item labels', function () {
+    [$head, $family, $plan] = groceryFixture();
+    $this->actingAs($head);
+    $meatloaf = groceryDish($family, 'Meatloaf', ['Hamburger', 'Eggs']);
+    $breakfast = groceryDish($family, 'Breakfast', ['Bacon', 'Eggs']);
+    $schedule = app(ScheduleWeeklyPlanEntry::class);
+
+    $schedule->execute($head, $plan, 1, WeeklyPlanEntrySlot::Main, dish: $meatloaf);
+    $schedule->execute($head, $plan, 1, WeeklyPlanEntrySlot::Alternative, dish: $breakfast);
+    app(AddManualGroceryItem::class)->execute($plan->groceryList, 'Napkins');
+
+    Livewire::actingAs($head)
+        ->test('pages::grocery-list')
+        ->assertSee('Used by dinners')
+        ->assertSee('Breakfast, Meatloaf')
+        ->assertSee('Manual');
+
+    Carbon::setTestNow();
+});
+
+test('grocery page keeps completed items in the collapsed completed section', function () {
+    [$head, $family, $plan] = groceryFixture();
+    $this->actingAs($head);
+    $dish = groceryDish($family, 'Dinner', ['Bananas', 'Apples', 'Carrots']);
+    app(ScheduleWeeklyPlanEntry::class)->execute($head, $plan, 1, WeeklyPlanEntrySlot::Main, dish: $dish);
+    $plan->groceryList->items()->whereIn('normalized_name', ['bananas', 'carrots'])->update(['is_checked' => true]);
+
+    Livewire::actingAs($head)
+        ->test('pages::grocery-list')
+        ->assertSeeInOrder(['Apples', 'Completed (2)', 'Bananas', 'Carrots']);
+
+    Carbon::setTestNow();
+});
+
+test('grocery item actions are isolated to the active family grocery list', function () {
+    [$head, $family, $plan] = groceryFixture();
+    $this->actingAs($head);
+    $visibleDish = groceryDish($family, 'Visible Dinner', ['Apples']);
+    app(ScheduleWeeklyPlanEntry::class)->execute($head, $plan, 1, WeeklyPlanEntrySlot::Main, dish: $visibleDish);
+
+    $otherHead = User::factory()->create();
+    $otherFamily = Family::factory()->for($otherHead, 'head')->create(['timezone' => 'UTC']);
+    $otherPlan = WeeklyPlan::factory()->for($otherFamily)->create([
+        'week_start_date' => '2026-06-22',
+    ]);
+    $privateDish = groceryDish($otherFamily, 'Private Dinner', ['Private Apples']);
+    app(ScheduleWeeklyPlanEntry::class)->execute($otherHead, $otherPlan, 1, WeeklyPlanEntrySlot::Main, dish: $privateDish);
+    $privateItem = $otherPlan->groceryList->items()->where('normalized_name', 'private apples')->sole();
+
+    $component = Livewire::actingAs($head)
+        ->test('pages::grocery-list')
+        ->assertSee('Apples')
+        ->assertDontSee('Private Apples');
+
+    expect(fn () => $component->call('toggleItem', $privateItem->id))
+        ->toThrow(ModelNotFoundException::class);
+
+    expect($privateItem->fresh()->is_checked)->toBeFalse()
+        ->and($privateItem->fresh()->is_suppressed)->toBeFalse();
 
     Carbon::setTestNow();
 });
