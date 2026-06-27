@@ -11,6 +11,16 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
+    --color-cream-50: #fff8ed;
+    --color-cream-100: #f9ecd5;
+    --color-terracotta-500: #b85f43;
+    --color-terracotta-600: #984b34;
+    --color-harvest-500: #d07a2d;
+    --color-olive-600: #596838;
+    --color-olive-700: #404c2b;
+    --color-cocoa-800: #3b271d;
+    --color-cocoa-900: #251814;
+
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
     --color-zinc-200: #e5e5e5;
@@ -23,16 +33,16 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
-    --color-accent: var(--color-neutral-800);
-    --color-accent-content: var(--color-neutral-800);
+    --color-accent: var(--color-terracotta-600);
+    --color-accent-content: var(--color-terracotta-600);
     --color-accent-foreground: var(--color-white);
 }
 
 @layer theme {
     .dark {
-        --color-accent: var(--color-white);
-        --color-accent-content: var(--color-white);
-        --color-accent-foreground: var(--color-neutral-800);
+        --color-accent: var(--color-harvest-500);
+        --color-accent-content: var(--color-harvest-500);
+        --color-accent-foreground: var(--color-cocoa-900);
     }
 }
 
@@ -44,6 +54,10 @@
     ::backdrop,
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
+    }
+
+    body {
+        @apply bg-cream-50 text-cocoa-900 antialiased dark:bg-cocoa-900 dark:text-cream-50;
     }
 }
 
@@ -58,7 +72,14 @@
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-cream-50 dark:ring-offset-cocoa-900;
+}
+
+[data-flux-button],
+[data-flux-navlist-item],
+[data-flux-navbar-item],
+[data-flux-sidebar-toggle] {
+    @apply min-h-11 touch-manipulation focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50 dark:focus-visible:ring-offset-cocoa-900;
 }
 
 /* \[:where(&)\]:size-4 {

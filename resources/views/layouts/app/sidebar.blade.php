@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-white dark:bg-zinc-800">
-        <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+    <body class="min-h-screen">
+        <flux:sidebar sticky collapsible="mobile" class="border-e border-cream-100 bg-cream-100 dark:border-cocoa-800 dark:bg-cocoa-900">
             <flux:sidebar.header>
                 <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
                 <flux:sidebar.collapse class="lg:hidden" />
@@ -12,22 +12,22 @@
 
             <flux:sidebar.nav>
                 <flux:sidebar.group :heading="__('Platform')" class="grid">
-                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate aria-label="{{ __('Open dashboard') }}">
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="user-group" :href="route('families.index')" :current="request()->routeIs('families.*')" wire:navigate>
+                    <flux:sidebar.item icon="user-group" :href="route('families.index')" :current="request()->routeIs('families.*')" wire:navigate aria-label="{{ __('Manage families') }}">
                         {{ __('Families') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="calendar-days" :href="route('weekly-plans.show')" :current="request()->routeIs('weekly-plans.*')" wire:navigate>
+                    <flux:sidebar.item icon="calendar-days" :href="route('weekly-plans.show')" :current="request()->routeIs('weekly-plans.*')" wire:navigate aria-label="{{ __('Open weekly plan') }}">
                         {{ __('Plan') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="shopping-cart" :href="route('grocery-lists.show')" :current="request()->routeIs('grocery-lists.*')" wire:navigate>
+                    <flux:sidebar.item icon="shopping-cart" :href="route('grocery-lists.show')" :current="request()->routeIs('grocery-lists.*')" wire:navigate aria-label="{{ __('Open grocery list') }}">
                         {{ __('Groceries') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="list-bullet" :href="route('ingredients.index')" :current="request()->routeIs('ingredients.*')" wire:navigate>
+                    <flux:sidebar.item icon="list-bullet" :href="route('ingredients.index')" :current="request()->routeIs('ingredients.*')" wire:navigate aria-label="{{ __('Manage ingredients') }}">
                         {{ __('Ingredients') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="book-open" :href="route('dishes.index')" :current="request()->routeIs('dishes.*')" wire:navigate>
+                    <flux:sidebar.item icon="book-open" :href="route('dishes.index')" :current="request()->routeIs('dishes.*')" wire:navigate aria-label="{{ __('Manage dishes') }}">
                         {{ __('Dishes') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
@@ -36,12 +36,12 @@
             <flux:spacer />
 
             <flux:sidebar.nav>
-                <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                    {{ __('Repository') }}
+                <flux:sidebar.item icon="arrow-up-tray" :href="route('dishes.import')" :current="request()->routeIs('dishes.import')" wire:navigate aria-label="{{ __('Import dishes from Markdown') }}">
+                    {{ __('Import') }}
                 </flux:sidebar.item>
 
-                <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
-                    {{ __('Documentation') }}
+                <flux:sidebar.item icon="cog-6-tooth" :href="route('profile.edit')" :current="request()->routeIs('profile.edit')" wire:navigate aria-label="{{ __('Open settings') }}">
+                    {{ __('Settings') }}
                 </flux:sidebar.item>
             </flux:sidebar.nav>
 
@@ -49,8 +49,8 @@
         </flux:sidebar>
 
         <!-- Mobile User Menu -->
-        <flux:header class="lg:hidden">
-            <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
+        <flux:header class="border-b border-cream-100 bg-cream-50/95 lg:hidden dark:border-cocoa-800 dark:bg-cocoa-900/95">
+            <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" aria-label="{{ __('Open navigation') }}" />
 
             <flux:spacer />
 

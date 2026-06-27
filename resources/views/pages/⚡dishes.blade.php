@@ -422,14 +422,17 @@ new #[Title('Dishes')] class extends Component {
                 </div>
 
                 @forelse ($this->ingredients as $ingredient)
-                    <label wire:key="dish-ingredient-{{ $ingredient->id }}" class="flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
-                        <div class="flex min-w-0 items-center gap-3">
+                    <label wire:key="dish-ingredient-{{ $ingredient->id }}" class="grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
+                        <span class="flex items-center justify-center">
                             <flux:checkbox wire:model.live="ingredientIds" :value="$ingredient->id" />
-                            <span class="truncate text-sm font-medium">{{ $ingredient->name }}</span>
-                        </div>
+                        </span>
+
+                        <span class="min-w-0 truncate text-sm font-medium leading-5">{{ $ingredient->name }}</span>
 
                         @if ($ingredient->protein_category)
                             <flux:badge>{{ $ingredient->protein_category->label() }}</flux:badge>
+                        @else
+                            <span aria-hidden="true"></span>
                         @endif
                     </label>
                 @empty

@@ -221,7 +221,7 @@ new #[Title('Grocery List')] class extends Component {
 };
 ?>
 
-<div class="mx-auto flex w-full max-w-4xl flex-col gap-8">
+<div class="mx-auto flex w-full max-w-4xl flex-col gap-8 px-2 sm:px-0">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <flux:heading size="xl">{{ __('Grocery list') }}</flux:heading>
@@ -245,9 +245,9 @@ new #[Title('Grocery List')] class extends Component {
             </div>
 
             <div class="flex flex-wrap gap-2">
-                <flux:button :href="$this->previousWeekUrl()" wire:navigate>{{ __('Previous') }}</flux:button>
-                <flux:button :href="$this->currentWeekUrl()" wire:navigate>{{ __('Current') }}</flux:button>
-                <flux:button :href="$this->nextWeekUrl()" wire:navigate>{{ __('Next') }}</flux:button>
+                <flux:button :href="$this->previousWeekUrl()" icon="chevron-left" wire:navigate aria-label="{{ __('Go to previous grocery week') }}">{{ __('Previous') }}</flux:button>
+                <flux:button :href="$this->currentWeekUrl()" icon="calendar" wire:navigate aria-label="{{ __('Go to current grocery week') }}">{{ __('Current') }}</flux:button>
+                <flux:button :href="$this->nextWeekUrl()" icon:trailing="chevron-right" wire:navigate aria-label="{{ __('Go to next grocery week') }}">{{ __('Next') }}</flux:button>
             </div>
         </div>
 
@@ -259,7 +259,7 @@ new #[Title('Grocery List')] class extends Component {
                     <flux:error name="manualItemName" />
                 </flux:field>
 
-                <flux:button type="submit" variant="primary" wire:loading.attr="disabled">
+                <flux:button type="submit" icon="plus" variant="primary" wire:loading.attr="disabled" aria-label="{{ __('Add manual grocery item') }}">
                     {{ __('Add item') }}
                 </flux:button>
             </form>
@@ -273,7 +273,7 @@ new #[Title('Grocery List')] class extends Component {
         </div>
 
         @if ($this->incompleteItems->isEmpty())
-            <div class="rounded-xl border border-dashed border-zinc-300 p-5 dark:border-zinc-700">
+            <div class="rounded-lg border border-dashed border-cream-100 p-5 dark:border-cocoa-800">
                 <flux:text>{{ __('No unchecked grocery items.') }}</flux:text>
             </div>
         @else
@@ -281,7 +281,7 @@ new #[Title('Grocery List')] class extends Component {
                 @foreach ($this->incompleteItems as $item)
                     <div wire:key="grocery-item-{{ $item->id }}" class="flex items-start justify-between gap-4 py-4">
                         <div class="flex min-w-0 flex-1 items-start gap-3">
-                            <flux:checkbox :checked="$item->is_checked" wire:click="toggleItem({{ $item->id }})" :disabled="$isPast" />
+                            <flux:checkbox :checked="$item->is_checked" wire:click="toggleItem({{ $item->id }})" :disabled="$isPast" aria-label="{{ __('Mark :item complete', ['item' => $item->name]) }}" />
 
                             <div class="min-w-0">
                                 <flux:text class="font-medium">{{ $item->name }}</flux:text>
@@ -298,7 +298,7 @@ new #[Title('Grocery List')] class extends Component {
                         </div>
 
                         @if (! $isPast)
-                            <flux:button size="sm" variant="danger" wire:click="removeItem({{ $item->id }})" wire:loading.attr="disabled">
+                            <flux:button size="sm" icon="trash" variant="danger" wire:click="removeItem({{ $item->id }})" wire:loading.attr="disabled" aria-label="{{ __('Remove :item from groceries', ['item' => $item->name]) }}">
                                 {{ __('Remove') }}
                             </flux:button>
                         @endif
@@ -308,14 +308,14 @@ new #[Title('Grocery List')] class extends Component {
         @endif
 
         @if ($this->completedItems->isNotEmpty())
-            <details class="rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
+            <details class="rounded-lg border border-cream-100 p-4 dark:border-cocoa-800">
                 <summary class="cursor-pointer font-medium">{{ __('Completed (:count)', ['count' => $this->completedItems->count()]) }}</summary>
 
                 <div class="mt-4 flex flex-col divide-y divide-zinc-200 dark:divide-zinc-700">
                     @foreach ($this->completedItems as $item)
                         <div wire:key="completed-grocery-item-{{ $item->id }}" class="flex items-center justify-between gap-4 py-3">
                             <div class="flex min-w-0 flex-1 items-start gap-3">
-                                <flux:checkbox :checked="$item->is_checked" wire:click="toggleItem({{ $item->id }})" :disabled="$isPast" />
+                                <flux:checkbox :checked="$item->is_checked" wire:click="toggleItem({{ $item->id }})" :disabled="$isPast" aria-label="{{ __('Mark :item incomplete', ['item' => $item->name]) }}" />
 
                                 <div class="min-w-0">
                                     <flux:text class="line-through opacity-70">{{ $item->name }}</flux:text>
@@ -332,7 +332,7 @@ new #[Title('Grocery List')] class extends Component {
                             </div>
 
                             @if (! $isPast)
-                                <flux:button size="sm" variant="danger" wire:click="removeItem({{ $item->id }})" wire:loading.attr="disabled">
+                                <flux:button size="sm" icon="trash" variant="danger" wire:click="removeItem({{ $item->id }})" wire:loading.attr="disabled" aria-label="{{ __('Remove :item from groceries', ['item' => $item->name]) }}">
                                     {{ __('Remove') }}
                                 </flux:button>
                             @endif
@@ -356,7 +356,7 @@ new #[Title('Grocery List')] class extends Component {
                         <flux:text>{{ $item->name }}</flux:text>
 
                         @if (! $isPast)
-                            <flux:button size="sm" variant="ghost" wire:click="restoreItem({{ $item->id }})" wire:loading.attr="disabled">
+                            <flux:button size="sm" icon="arrow-uturn-left" variant="ghost" wire:click="restoreItem({{ $item->id }})" wire:loading.attr="disabled" aria-label="{{ __('Restore :item to groceries', ['item' => $item->name]) }}">
                                 {{ __('Restore') }}
                             </flux:button>
                         @endif

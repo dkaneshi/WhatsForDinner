@@ -273,7 +273,7 @@ new #[Title('Dashboard')] class extends Component {
 };
 ?>
 
-<div class="mx-auto flex w-full max-w-6xl flex-col gap-8">
+<div class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-2 sm:px-0">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
             <flux:heading size="xl">{{ __('Dashboard') }}</flux:heading>
@@ -294,7 +294,7 @@ new #[Title('Dashboard')] class extends Component {
                 </flux:select>
             </flux:field>
 
-            <flux:button type="submit" wire:loading.attr="disabled">
+            <flux:button type="submit" icon="arrow-path" wire:loading.attr="disabled" aria-label="{{ __('Switch active family') }}">
                 {{ __('Switch') }}
             </flux:button>
         </form>
@@ -308,14 +308,14 @@ new #[Title('Dashboard')] class extends Component {
                     <flux:text>{{ $this->weekLabel() }}</flux:text>
                 </div>
 
-                <flux:button :href="route('weekly-plans.show', ['weekStart' => $weekStartDate])" icon="calendar-days" wire:navigate>
+                <flux:button :href="route('weekly-plans.show', ['weekStart' => $weekStartDate])" icon="calendar-days" wire:navigate aria-label="{{ __('Plan dinners for this week') }}">
                     {{ __('Plan dinners') }}
                 </flux:button>
             </div>
 
             <div class="grid gap-3 md:grid-cols-5">
                 @foreach ($this->dinnerSummary as $summary)
-                    <div wire:key="dashboard-weekday-{{ $summary['weekday'] }}" class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
+                    <div wire:key="dashboard-weekday-{{ $summary['weekday'] }}" class="rounded-lg border border-cream-100 bg-white/70 p-3 dark:border-cocoa-800 dark:bg-cocoa-800/40">
                         <flux:text class="font-medium">{{ $summary['label'] }}</flux:text>
 
                         @if ($summary['main'])
@@ -349,22 +349,22 @@ new #[Title('Dashboard')] class extends Component {
 
             <flux:progress :value="$completionPercent" />
 
-            <flux:button :href="route('grocery-lists.show', ['weekStart' => $weekStartDate])" icon="shopping-cart" wire:navigate>
+            <flux:button :href="route('grocery-lists.show', ['weekStart' => $weekStartDate])" icon="shopping-cart" wire:navigate aria-label="{{ __('Open groceries for this week') }}">
                 {{ __('Open groceries') }}
             </flux:button>
         </flux:card>
     </section>
 
     <section class="grid gap-4 md:grid-cols-3">
-        <flux:button :href="route('weekly-plans.show', ['weekStart' => $weekStartDate])" icon="calendar-days" wire:navigate>
+        <flux:button :href="route('weekly-plans.show', ['weekStart' => $weekStartDate])" icon="calendar-days" wire:navigate aria-label="{{ __('Open weekly planning') }}">
             {{ __('Planning') }}
         </flux:button>
 
-        <flux:button :href="route('grocery-lists.show', ['weekStart' => $weekStartDate])" icon="shopping-cart" wire:navigate>
+        <flux:button :href="route('grocery-lists.show', ['weekStart' => $weekStartDate])" icon="shopping-cart" wire:navigate aria-label="{{ __('Open grocery list') }}">
             {{ __('Groceries') }}
         </flux:button>
 
-        <flux:button :href="route('dishes.index')" icon="book-open" wire:navigate>
+        <flux:button :href="route('dishes.index')" icon="book-open" wire:navigate aria-label="{{ __('Open dish collection') }}">
             {{ __('Dish collection') }}
         </flux:button>
     </section>
@@ -377,14 +377,14 @@ new #[Title('Dashboard')] class extends Component {
                     <flux:text>{{ __('Aim for two active dishes in every category before relying on balanced suggestions.') }}</flux:text>
                 </div>
 
-                <flux:button variant="ghost" wire:click="dismissChecklist" wire:loading.attr="disabled">
+                <flux:button variant="ghost" icon="x-mark" wire:click="dismissChecklist" wire:loading.attr="disabled" aria-label="{{ __('Dismiss dish collection checklist') }}">
                     {{ __('Dismiss') }}
                 </flux:button>
             </div>
 
             <div class="grid gap-3 md:grid-cols-5">
                 @foreach ($this->checklistProgress as $progress)
-                    <div wire:key="checklist-{{ $progress['category']->value }}" class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
+                    <div wire:key="checklist-{{ $progress['category']->value }}" class="rounded-lg border border-cream-100 bg-white/70 p-3 dark:border-cocoa-800 dark:bg-cocoa-800/40">
                         <div class="flex items-start justify-between gap-2">
                             <flux:text class="font-medium">{{ $progress['label'] }}</flux:text>
 
@@ -403,7 +403,7 @@ new #[Title('Dashboard')] class extends Component {
             </div>
 
             <div>
-                <flux:button :href="route('dishes.index')" icon="plus" wire:navigate>
+                <flux:button :href="route('dishes.index')" icon="plus" wire:navigate aria-label="{{ __('Add dishes to collection') }}">
                     {{ __('Add dishes') }}
                 </flux:button>
             </div>

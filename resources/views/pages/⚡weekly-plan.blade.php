@@ -297,7 +297,7 @@ new #[Title('Weekly Plan')] class extends Component {
 };
 ?>
 
-<div class="mx-auto flex w-full max-w-5xl flex-col gap-8">
+<div class="mx-auto flex w-full max-w-5xl flex-col gap-8 px-2 sm:px-0">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <flux:heading size="xl">{{ __('Weekly plan') }}</flux:heading>
@@ -321,15 +321,15 @@ new #[Title('Weekly Plan')] class extends Component {
             </div>
 
             <div class="flex flex-wrap gap-2">
-                <flux:button :href="$this->previousWeekUrl()" wire:navigate>
+                <flux:button :href="$this->previousWeekUrl()" icon="chevron-left" wire:navigate aria-label="{{ __('Go to previous planning week') }}">
                     {{ __('Previous') }}
                 </flux:button>
 
-                <flux:button :href="$this->currentWeekUrl()" wire:navigate>
+                <flux:button :href="$this->currentWeekUrl()" icon="calendar" wire:navigate aria-label="{{ __('Go to current planning week') }}">
                     {{ __('Current') }}
                 </flux:button>
 
-                <flux:button :href="$this->nextWeekUrl()" wire:navigate>
+                <flux:button :href="$this->nextWeekUrl()" icon:trailing="chevron-right" wire:navigate aria-label="{{ __('Go to next planning week') }}">
                     {{ __('Next') }}
                 </flux:button>
             </div>
@@ -358,13 +358,13 @@ new #[Title('Weekly Plan')] class extends Component {
                         $mainIsSpecial = $mainEntry?->special_entry instanceof WeeklyPlanSpecialEntry;
                     @endphp
 
-                    <flux:card wire:key="weekday-{{ $weekday }}" class="flex flex-col gap-4">
+                    <section wire:key="weekday-{{ $weekday }}" class="flex flex-col gap-4 rounded-lg border border-cream-100 bg-white/80 p-4 shadow-xs dark:border-cocoa-800 dark:bg-cocoa-800/40" aria-labelledby="weekday-{{ $weekday }}-heading">
                         <div>
-                            <flux:heading size="lg">{{ $weekdayLabel }}</flux:heading>
+                            <flux:heading id="weekday-{{ $weekday }}-heading" size="lg">{{ $weekdayLabel }}</flux:heading>
                         </div>
 
                         <div class="flex flex-col gap-3">
-                            <div class="rounded-xl border border-zinc-200 p-3 dark:border-zinc-700">
+                            <div class="rounded-lg border border-cream-100 p-3 dark:border-cocoa-800">
                                 <div class="mb-2 flex items-center justify-between gap-2">
                                     <flux:text class="font-medium">{{ __('Main') }}</flux:text>
                                 </div>
@@ -379,13 +379,13 @@ new #[Title('Weekly Plan')] class extends Component {
 
                                         <div class="flex flex-wrap gap-2">
                                             @if (! $isPast && $mainEntry->is_leftovers)
-                                                <flux:button size="sm" variant="ghost" wire:click="markFresh({{ $mainEntry->id }})" wire:loading.attr="disabled">
+                                                <flux:button size="sm" icon="sparkles" variant="ghost" wire:click="markFresh({{ $mainEntry->id }})" wire:loading.attr="disabled" aria-label="{{ __('Mark :dish as cooked fresh', ['dish' => $mainEntry->label()]) }}">
                                                     {{ __('Cook fresh') }}
                                                 </flux:button>
                                             @endif
 
                                             @if (! $isPast)
-                                                <flux:button size="sm" variant="danger" wire:click="removeEntry({{ $mainEntry->id }})" wire:loading.attr="disabled">
+                                                <flux:button size="sm" icon="trash" variant="danger" wire:click="removeEntry({{ $mainEntry->id }})" wire:loading.attr="disabled" aria-label="{{ __('Remove :dish from the plan', ['dish' => $mainEntry->label()]) }}">
                                                     {{ __('Remove') }}
                                                 </flux:button>
                                             @endif
@@ -406,11 +406,11 @@ new #[Title('Weekly Plan')] class extends Component {
                                             <flux:error name="dishSelections.{{ $weekday }}.main" />
                                         </flux:field>
 
-                                        <flux:button size="sm" wire:click="scheduleDish({{ $weekday }}, 'main')" wire:loading.attr="disabled">
+                                        <flux:button size="sm" icon="plus" wire:click="scheduleDish({{ $weekday }}, 'main')" wire:loading.attr="disabled" aria-label="{{ __('Add main dish for :day', ['day' => $weekdayLabel]) }}">
                                             {{ __('Add main dish') }}
                                         </flux:button>
 
-                                        <div class="border-t border-zinc-200 pt-3 dark:border-zinc-700">
+                                        <div class="border-t border-cream-100 pt-3 dark:border-cocoa-800">
                                             <flux:field>
                                                 <flux:label>{{ __('Special night') }}</flux:label>
                                                 <flux:select wire:model="specialSelections.{{ $weekday }}.main">
@@ -420,7 +420,7 @@ new #[Title('Weekly Plan')] class extends Component {
                                                 </flux:select>
                                             </flux:field>
 
-                                            <flux:button class="mt-3" size="sm" variant="ghost" wire:click="scheduleSpecial({{ $weekday }})" wire:loading.attr="disabled">
+                                            <flux:button class="mt-3" size="sm" icon="plus" variant="ghost" wire:click="scheduleSpecial({{ $weekday }})" wire:loading.attr="disabled" aria-label="{{ __('Add special dinner night for :day', ['day' => $weekdayLabel]) }}">
                                                 {{ __('Add special') }}
                                             </flux:button>
                                         </div>
@@ -430,7 +430,7 @@ new #[Title('Weekly Plan')] class extends Component {
                                 @endif
                             </div>
 
-                            <div class="rounded-xl border border-zinc-200 p-3 dark:border-zinc-700">
+                            <div class="rounded-lg border border-cream-100 p-3 dark:border-cocoa-800">
                                 <div class="mb-2 flex items-center justify-between gap-2">
                                     <flux:text class="font-medium">{{ __('Alternative') }}</flux:text>
                                 </div>
@@ -445,13 +445,13 @@ new #[Title('Weekly Plan')] class extends Component {
 
                                         <div class="flex flex-wrap gap-2">
                                             @if (! $isPast && $alternativeEntry->is_leftovers)
-                                                <flux:button size="sm" variant="ghost" wire:click="markFresh({{ $alternativeEntry->id }})" wire:loading.attr="disabled">
+                                                <flux:button size="sm" icon="sparkles" variant="ghost" wire:click="markFresh({{ $alternativeEntry->id }})" wire:loading.attr="disabled" aria-label="{{ __('Mark :dish as cooked fresh', ['dish' => $alternativeEntry->label()]) }}">
                                                     {{ __('Cook fresh') }}
                                                 </flux:button>
                                             @endif
 
                                             @if (! $isPast)
-                                                <flux:button size="sm" variant="danger" wire:click="removeEntry({{ $alternativeEntry->id }})" wire:loading.attr="disabled">
+                                                <flux:button size="sm" icon="trash" variant="danger" wire:click="removeEntry({{ $alternativeEntry->id }})" wire:loading.attr="disabled" aria-label="{{ __('Remove :dish from the plan', ['dish' => $alternativeEntry->label()]) }}">
                                                     {{ __('Remove') }}
                                                 </flux:button>
                                             @endif
@@ -474,7 +474,7 @@ new #[Title('Weekly Plan')] class extends Component {
                                             <flux:error name="dishSelections.{{ $weekday }}.alternative" />
                                         </flux:field>
 
-                                        <flux:button size="sm" variant="ghost" wire:click="scheduleDish({{ $weekday }}, 'alternative')" wire:loading.attr="disabled">
+                                        <flux:button size="sm" icon="plus" variant="ghost" wire:click="scheduleDish({{ $weekday }}, 'alternative')" wire:loading.attr="disabled" aria-label="{{ __('Add alternative dish for :day', ['day' => $weekdayLabel]) }}">
                                             {{ __('Add alternative') }}
                                         </flux:button>
                                     </div>
@@ -483,7 +483,7 @@ new #[Title('Weekly Plan')] class extends Component {
                                 @endif
                             </div>
                         </div>
-                    </flux:card>
+                    </section>
                 @endforeach
             </div>
         </div>
@@ -498,14 +498,14 @@ new #[Title('Weekly Plan')] class extends Component {
                 </div>
 
                 @if (! $isPast)
-                    <flux:button wire:click="regenerateSuggestions" wire:loading.attr="disabled">
+                    <flux:button icon="arrow-path" wire:click="regenerateSuggestions" wire:loading.attr="disabled" aria-label="{{ __('Regenerate weekly dinner suggestions') }}">
                         {{ __('Regenerate suggestions') }}
                     </flux:button>
                 @endif
             </div>
 
             @if ($this->suggestedDishes->isEmpty())
-                <div class="rounded-xl border border-dashed border-zinc-300 p-5 dark:border-zinc-700">
+                <div class="rounded-lg border border-dashed border-cream-100 p-5 dark:border-cocoa-800">
                     <flux:text class="font-medium">{{ __('No suggestions yet.') }}</flux:text>
                     <flux:text class="mt-1">
                         {{ __('Add active dishes with main protein categories to build balanced suggestions.') }}
@@ -514,7 +514,7 @@ new #[Title('Weekly Plan')] class extends Component {
             @else
                 <div class="grid gap-4 md:grid-cols-2">
                     @foreach ($this->suggestedDishes as $dish)
-                        <flux:card wire:key="suggestion-{{ $dish->id }}" class="flex flex-col gap-4">
+                        <section wire:key="suggestion-{{ $dish->id }}" class="flex flex-col gap-4 rounded-lg border border-cream-100 bg-white/80 p-4 dark:border-cocoa-800 dark:bg-cocoa-800/40">
                             <div class="flex items-start justify-between gap-4">
                                 <div>
                                     <flux:heading>{{ $dish->name }}</flux:heading>
@@ -533,7 +533,7 @@ new #[Title('Weekly Plan')] class extends Component {
                                 <flux:text class="font-medium">{{ __('Ingredients') }}</flux:text>
                                 <flux:text>{{ $dish->ingredients->pluck('name')->join(', ') }}</flux:text>
                             </div>
-                        </flux:card>
+                        </section>
                     @endforeach
                 </div>
             @endif
