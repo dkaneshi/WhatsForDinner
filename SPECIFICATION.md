@@ -1,7 +1,7 @@
 # What's for Dinner? Product Specification
 
 Status: Approved  
-Last updated: June 22, 2026
+Last updated: June 27, 2026
 
 ## Product Goal
 
@@ -560,3 +560,51 @@ Release 1 provides a cohesive, accessible, phone-first experience covering the c
 - The end-to-end browser journey covers registration, verification, family creation, Markdown import, invitation acceptance, weekly planning, and grocery-list generation.
 - A typical family can reasonably complete planning and receive the grocery list within the ten-minute success criterion.
 
+### R1-16 — Sunday-Anchored Weekend Plan Expansion
+
+#### Outcome
+
+Weekly plans cover a full Sunday-through-Saturday week, so a family's entire week of dinners and its single grocery list match the way the family actually shops and cooks — without changing what "completing" a week means and without altering historical 5-day plans.
+
+#### Decisions Locked
+
+- The week is Sunday through Saturday for all families. There is no per-family week-start setting; flexibility there is explicitly out of scope and would be revisited only by rebuilding.
+- `weekday` is stored as ISO-8601 day-of-week (1 = Monday … 7 = Sunday). The weekend days added are Saturday = 6 and Sunday = 7.
+- The application's week boundary and ordering are Sunday-first. ISO numbering is the storage vocabulary only and does not make Monday the first day of the week.
+
+#### Requirements
+
+- Add an `includes_weekend` boolean to the weekly-plan model, migration, and factory, defaulting to `true`. It distinguishes Sunday-start 7-day plans from frozen legacy 5-day plans.
+- Backfill existing plans: set `includes_weekend` to `true` where the plan's week is current-or-future in the family's time zone, and `false` otherwise. Past plans stay 5-day and are never retroactively re-sliced.
+- Define the week as Sunday through Saturday in a single, shared boundary helper, treating Sunday (7) as the first day and Saturday (6) as the last. Do not rely on Carbon's default `startOfWeek()`. All current-week, read-only-cutoff, and recent-avoidance-window logic uses this helper. Boundaries remain time-zone-aware per family.
+- A weekend-enabled plan covers all seven days, ordered Sunday (7), Monday (1), Tuesday (2), Wednesday (3), Thursday (4), Friday (5), Saturday (6). Legacy plans remain the five weekdays, Monday through Friday.
+- Update server-side scheduling validation to accept `weekday` 6 and 7 only when the plan's `includes_weekend` is `true`, and reject them otherwise.
+- Extend per-day scheduling (one main and at most one alternative; Leftovers default; `Eat Out` and `TV Dinner Night`) to Saturday and Sunday on 7-day plans.
+- Keep suggestion generation at ten dishes. Weekend-scheduled dishes count as already-scheduled for exclusion and recent-avoidance, evaluated in Sunday-anchored weeks.
+- Keep completeness derived solely from the five weekday (Monday–Friday) main slots. Saturday and Sunday are optional and never affect or block completion.
+- Remove the weekend → upcoming-week dashboard rule. The dashboard defaults to the current week every day, including the weekend.
+- Render the dashboard summary, planning grid, and read-only past view in Sunday-first order for the correct day count per plan (seven days for weekend-enabled plans, five for legacy plans).
+- Keep the planning grid comfortable at phone width and accommodate seven Sunday-first columns on desktop.
+
+#### Acceptance Tests
+
+- A new plan is created with `includes_weekend` true, ordered Sunday-first, and accepts Saturday (6) and Sunday (7) entries.
+- Scheduling `weekday` 6 or 7 on a legacy 5-day plan is rejected by server-side validation.
+- A past, pre-change plan continues to render and behave as five Monday-through-Friday days and is unaffected by the migration.
+- The backfill sets current and future existing plans to 7-day and leaves past plans 5-day.
+- The week-boundary helper treats Sunday as the first day, so a Sunday and its following Saturday resolve to the same plan, grocery list, and read-only state.
+- A week is complete once its five weekday main slots are filled, regardless of weekend slots.
+- Leaving both weekend slots empty never blocks completion and never appears as missing.
+- A dish scheduled only on a weekend appears on the grocery list and counts once in suggestion history within the Sunday-anchored week.
+- The recent-avoidance window counts in Sunday-anchored weeks.
+- The dashboard defaults to the current week on Saturday and Sunday and shows weekend dinners.
+- Every affected action is covered by authorization checks scoped to the active family.
+
+#### Amendments to Existing Specs
+
+- R1-08 (Weekly Plan Foundation): week coverage becomes Sunday through Saturday for weekend-enabled plans; the week boundary is Sunday-anchored via the shared helper; add `includes_weekend`. This supersedes the original "Monday-based week" language for new plans, while legacy plans retain their original Monday-through-Friday behavior.
+- R1-09 (Suggestion Generator): weekend-scheduled dishes participate in exclusion and recent-avoidance; the avoidance window is Sunday-anchored; the suggestion count stays ten.
+- R1-10 (Dinner Scheduling): per-day rules extend to Saturday (6) and Sunday (7); completeness remains the five weekday main slots.
+- R1-12 / R1-13 (Grocery): no rule change; weekend dishes contribute to the single weekly list automatically once scheduled.
+- R1-14 (Dashboard): remove the weekend default-week rule; the summary spans seven Sunday-first days for 7-day plans.
+- R1-15 (Mobile): the planning grid and dashboard summary are verified at seven Sunday-first days on phone and desktop.
