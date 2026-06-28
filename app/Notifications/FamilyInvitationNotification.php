@@ -4,11 +4,10 @@ namespace App\Notifications;
 
 use App\Models\FamilyInvitation;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class FamilyInvitationNotification extends Notification implements ShouldQueue
+class FamilyInvitationNotification extends Notification
 {
     use Queueable;
 

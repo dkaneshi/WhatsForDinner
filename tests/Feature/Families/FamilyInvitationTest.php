@@ -86,7 +86,7 @@ test('the head can send a seven day email invitation', function () {
 
             return $channels === ['mail']
                 && $notifiable->routes['mail'] === 'guest@example.com'
-                && $notification instanceof ShouldQueue
+                && ! $notification instanceof ShouldQueue
                 && $notification->invitation->is($invitation)
                 && $invitation->token_hash === FamilyInvitation::hashToken($notification->token)
                 && $invitation->token_hash !== $notification->token
