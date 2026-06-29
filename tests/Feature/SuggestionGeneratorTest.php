@@ -210,6 +210,61 @@ test('regeneration replaces suggestions without changing scheduled entries', fun
         ->and($plan->entries()->count())->toBe(1);
 });
 
+test('a dish scheduled only on a weekend is excluded from suggestions', function () {
+    $head = User::factory()->create();
+    $family = Family::factory()->for($head, 'head')->create();
+    $dishes = suggestionDishSet($family, perCategory: 3);
+    $plan = suggestionPlan($family, '2026-06-28');
+    $weekendDish = $dishes[ProteinCategory::Beef->value][0];
+
+    WeeklyPlanEntry::factory()->for($plan)->for($weekendDish)->create([
+        'weekday' => 6, // Saturday
+        'slot' => WeeklyPlanEntrySlot::Main,
+    ]);
+
+    $suggestionIds = app(RegenerateWeeklyPlanSuggestions::class)
+        ->execute($head, $plan)
+        ->pluck('id')
+        ->all();
+
+    expect($suggestionIds)->not->toContain($weekendDish->id);
+});
+
+test('the recent-avoidance window counts weekend dishes in Sunday-anchored weeks', function () {
+    $head = User::factory()->create();
+    $family = Family::factory()->for($head, 'head')->create();
+    $recentSundayBeef = suggestionDish($family, ProteinCategory::Beef, 'Recent Sunday Beef');
+    $freshBeefOne = suggestionDish($family, ProteinCategory::Beef, 'Fresh Beef One');
+    $freshBeefTwo = suggestionDish($family, ProteinCategory::Beef, 'Fresh Beef Two');
+
+    foreach (ProteinCategory::cases() as $category) {
+        if ($category === ProteinCategory::Beef) {
+            continue;
+        }
+
+        suggestionDish($family, $category, $category->label().' Fresh One');
+        suggestionDish($family, $category, $category->label().' Fresh Two');
+    }
+
+    $currentPlan = suggestionPlan($family, '2026-06-28');
+    $priorPlan = suggestionPlan($family, '2026-06-21');
+
+    // Sunday of the prior Sunday-anchored week.
+    WeeklyPlanEntry::factory()->for($priorPlan)->for($recentSundayBeef)->create([
+        'weekday' => 7,
+        'slot' => WeeklyPlanEntrySlot::Main,
+    ]);
+
+    $suggestionIds = app(RegenerateWeeklyPlanSuggestions::class)
+        ->execute($head, $currentPlan)
+        ->pluck('id')
+        ->all();
+
+    expect($suggestionIds)->not->toContain($recentSundayBeef->id)
+        ->and($suggestionIds)->toContain($freshBeefOne->id)
+        ->and($suggestionIds)->toContain($freshBeefTwo->id);
+});
+
 test('first visit creates initial suggestions for editable weeks', function () {
     $head = User::factory()->create();
     $family = Family::factory()->for($head, 'head')->create(['timezone' => 'UTC']);

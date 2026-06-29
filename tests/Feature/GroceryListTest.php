@@ -28,7 +28,7 @@ function groceryFixture(): array
     $head = User::factory()->create();
     $family = Family::factory()->for($head, 'head')->create(['timezone' => 'UTC']);
     $plan = WeeklyPlan::factory()->for($family)->create([
-        'week_start_date' => '2026-06-22',
+        'week_start_date' => '2026-06-21',
     ]);
 
     return [$head, $family, $plan];
@@ -308,7 +308,7 @@ test('grocery item actions are isolated to the active family grocery list', func
     $otherHead = User::factory()->create();
     $otherFamily = Family::factory()->for($otherHead, 'head')->create(['timezone' => 'UTC']);
     $otherPlan = WeeklyPlan::factory()->for($otherFamily)->create([
-        'week_start_date' => '2026-06-22',
+        'week_start_date' => '2026-06-21',
     ]);
     $privateDish = groceryDish($otherFamily, 'Private Dinner', ['Private Apples']);
     app(ScheduleWeeklyPlanEntry::class)->execute($otherHead, $otherPlan, 1, WeeklyPlanEntrySlot::Main, dish: $privateDish);

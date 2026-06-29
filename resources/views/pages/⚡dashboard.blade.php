@@ -4,6 +4,7 @@ use App\Actions\Families\ResolveActiveFamily;
 use App\Actions\Families\SwitchActiveFamily;
 use App\Actions\GroceryLists\ReconcileGroceryList;
 use App\Actions\WeeklyPlans\FindOrCreateWeeklyPlan;
+use App\Actions\WeeklyPlans\ResolveWeeklyPlanWeek;
 use App\Models\Family;
 use App\Models\User;
 use App\Models\WeeklyPlan;
@@ -32,6 +33,8 @@ new #[Title('Dashboard')] class extends Component {
     public ?int $selectedFamilyId = null;
 
     public string $weekStartDate = '';
+
+    private ?WeeklyPlan $resolvedWeeklyPlan = null;
 
     public function mount(
         ResolveActiveFamily $resolveActiveFamily,
@@ -84,9 +87,15 @@ new #[Title('Dashboard')] class extends Component {
     public function weekLabel(): string
     {
         $weekStart = Carbon::parse($this->weekStartDate, $this->activeFamily()->timezone)->startOfDay();
-        $weekEnd = $weekStart->copy()->addDays(4);
+        $dayCount = $this->weeklyPlan()->includes_weekend ? 7 : 5;
+        $weekEnd = $weekStart->copy()->addDays($dayCount - 1);
 
         return $weekStart->format('M j').'–'.$weekEnd->format('M j, Y');
+    }
+
+    public function includesWeekend(): bool
+    {
+        return $this->weeklyPlan()->includes_weekend;
     }
 
     /**
@@ -95,7 +104,7 @@ new #[Title('Dashboard')] class extends Component {
     #[Computed]
     public function dinnerSummary(): Collection
     {
-        return collect($this->weekdayLabels())
+        return collect($this->orderedWeekdayLabels())
             ->map(function (string $label, int $weekday): array {
                 $entries = $this->entriesByWeekday->get($weekday, collect());
                 $mainEntry = $entries->first(fn (WeeklyPlanEntry $entry): bool => $entry->slot === WeeklyPlanEntrySlot::Main);
@@ -200,7 +209,9 @@ new #[Title('Dashboard')] class extends Component {
 
     private function weeklyPlan(): WeeklyPlan
     {
-        return $this->activeFamily()->weeklyPlans()->findOrFail($this->weeklyPlanId);
+        return $this->resolvedWeeklyPlan ??= $this->activeFamily()
+            ->weeklyPlans()
+            ->findOrFail($this->weeklyPlanId);
     }
 
     private function setDashboardFamily(
@@ -219,6 +230,7 @@ new #[Title('Dashboard')] class extends Component {
 
         $this->weeklyPlanId = $weeklyPlan->id;
         $this->weekStartDate = $weekStart->toDateString();
+        $this->resolvedWeeklyPlan = $weeklyPlan;
 
         unset(
             $this->families,
@@ -231,16 +243,9 @@ new #[Title('Dashboard')] class extends Component {
         );
     }
 
-    private function defaultWeekStart(Family $family): Carbon
+    private function defaultWeekStart(Family $family): CarbonInterface
     {
-        $now = Carbon::now($family->timezone)->startOfDay();
-        $weekStart = $now->copy()->startOfWeek(CarbonInterface::MONDAY);
-
-        if ($now->isWeekend()) {
-            return $weekStart->addWeek();
-        }
-
-        return $weekStart;
+        return app(ResolveWeeklyPlanWeek::class)->currentWeekStart($family);
     }
 
     private function activeDishCountFor(ProteinCategory $category): int
@@ -253,17 +258,29 @@ new #[Title('Dashboard')] class extends Component {
     }
 
     /**
+     * Sunday-first weekday labels for the plan's day count.
+     *
      * @return array<int, string>
      */
-    private function weekdayLabels(): array
+    private function orderedWeekdayLabels(): array
     {
-        return [
+        $names = [
+            7 => __('Sunday'),
             1 => __('Monday'),
             2 => __('Tuesday'),
             3 => __('Wednesday'),
             4 => __('Thursday'),
             5 => __('Friday'),
+            6 => __('Saturday'),
         ];
+
+        $labels = [];
+
+        foreach ($this->weeklyPlan()->orderedWeekdays() as $weekday) {
+            $labels[$weekday] = $names[$weekday];
+        }
+
+        return $labels;
     }
 
     private function user(): User
@@ -313,7 +330,7 @@ new #[Title('Dashboard')] class extends Component {
                 </flux:button>
             </div>
 
-            <div class="grid gap-3 md:grid-cols-5">
+            <div class="grid gap-3 {{ $this->includesWeekend() ? 'sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7' : 'md:grid-cols-5' }}">
                 @foreach ($this->dinnerSummary as $summary)
                     <div wire:key="dashboard-weekday-{{ $summary['weekday'] }}" class="rounded-lg border border-cream-100 bg-white/70 p-3 dark:border-cocoa-800 dark:bg-cocoa-800/40">
                         <flux:text class="font-medium">{{ $summary['label'] }}</flux:text>

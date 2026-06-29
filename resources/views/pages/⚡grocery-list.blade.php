@@ -147,7 +147,8 @@ new #[Title('Grocery List')] class extends Component {
     public function weekLabel(): string
     {
         $weekStart = $this->weekStart();
-        $weekEnd = $weekStart->copy()->addDays(4);
+        $dayCount = $this->weeklyPlan()->includes_weekend ? 7 : 5;
+        $weekEnd = $weekStart->copy()->addDays($dayCount - 1);
 
         return $weekStart->format('M j').'–'.$weekEnd->format('M j, Y');
     }
@@ -241,7 +242,7 @@ new #[Title('Grocery List')] class extends Component {
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <flux:heading>{{ $this->weekLabel() }}</flux:heading>
-                <flux:text>{{ __('Week starts Monday, :date', ['date' => $weekStartDate]) }}</flux:text>
+                <flux:text>{{ __('Week starts Sunday, :date', ['date' => $weekStartDate]) }}</flux:text>
             </div>
 
             <div class="flex flex-wrap gap-2">
