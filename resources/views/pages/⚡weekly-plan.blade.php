@@ -372,7 +372,7 @@ new #[Title('Weekly Plan')] class extends Component {
                 @endif
             </div>
 
-            <div class="grid gap-4 {{ $this->includesWeekend() ? 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7' : 'lg:grid-cols-5' }}">
+            <div class="grid gap-4 {{ $this->includesWeekend() ? 'sm:grid-cols-2 lg:grid-cols-3' : 'lg:grid-cols-5' }}">
                 @foreach ($this->weekdayLabels() as $weekday => $weekdayLabel)
                     @php
                         $entries = $this->entriesByWeekday->get($weekday, collect());
