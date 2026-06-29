@@ -19,11 +19,22 @@ class WeeklyPlanFactory extends Factory
      */
     public function definition(): array
     {
+        $date = Carbon::parse(fake()->dateTimeBetween('-4 weeks', '+4 weeks'))->startOfDay();
+
         return [
             'family_id' => Family::factory(),
-            'week_start_date' => Carbon::parse(fake()->dateTimeBetween('-4 weeks', '+4 weeks'))
-                ->startOfWeek()
-                ->toDateString(),
+            'week_start_date' => $date->copy()->subDays($date->dayOfWeek)->toDateString(),
+            'includes_weekend' => true,
         ];
+    }
+
+    /**
+     * A frozen legacy five-day (Monday through Friday) plan.
+     */
+    public function legacy(): static
+    {
+        return $this->state(fn (): array => [
+            'includes_weekend' => false,
+        ]);
     }
 }

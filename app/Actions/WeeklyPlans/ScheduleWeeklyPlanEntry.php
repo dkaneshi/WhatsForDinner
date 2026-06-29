@@ -33,9 +33,11 @@ class ScheduleWeeklyPlanEntry
     ): WeeklyPlanEntry {
         Gate::forUser($user)->authorize('update', $weeklyPlan);
 
-        if ($weekday < 1 || $weekday > 5) {
+        if (! in_array($weekday, $weeklyPlan->orderedWeekdays(), true)) {
             throw ValidationException::withMessages([
-                'weekday' => __('Choose a weekday from Monday through Friday.'),
+                'weekday' => $weeklyPlan->includes_weekend
+                    ? __('Choose a day from Sunday through Saturday.')
+                    : __('Choose a weekday from Monday through Friday.'),
             ]);
         }
 
@@ -129,11 +131,24 @@ class ScheduleWeeklyPlanEntry
         return $entry->refresh();
     }
 
+    /**
+     * A dish defaults to leftovers when it already appears on an earlier day of
+     * the Sunday-first week, not merely a lower ISO weekday number.
+     */
     private function defaultsToLeftovers(WeeklyPlan $weeklyPlan, Dish $dish, int $weekday): bool
     {
+        $orderedWeekdays = $weeklyPlan->orderedWeekdays();
+        $position = array_search($weekday, $orderedWeekdays, true);
+
+        if ($position === false || $position === 0) {
+            return false;
+        }
+
+        $earlierWeekdays = array_slice($orderedWeekdays, 0, $position);
+
         return $weeklyPlan->entries()
             ->where('dish_id', $dish->id)
-            ->where('weekday', '<', $weekday)
+            ->whereIn('weekday', $earlierWeekdays)
             ->exists();
     }
 }

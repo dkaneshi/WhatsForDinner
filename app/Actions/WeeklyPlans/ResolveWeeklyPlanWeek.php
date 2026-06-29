@@ -11,11 +11,12 @@ class ResolveWeeklyPlanWeek
 {
     public function currentWeekStart(Family $family, ?CarbonInterface $now = null): CarbonInterface
     {
-        return ($now ?? Carbon::now($family->timezone))
+        $today = ($now ?? Carbon::now($family->timezone))
             ->copy()
             ->timezone($family->timezone)
-            ->startOfDay()
-            ->startOfWeek(CarbonInterface::MONDAY);
+            ->startOfDay();
+
+        return $this->anchorToSunday($today);
     }
 
     public function fromRouteValue(Family $family, ?string $weekStart = null): CarbonInterface
@@ -32,9 +33,13 @@ class ResolveWeeklyPlanWeek
             ]);
         }
 
-        if ($date->copy()->startOfWeek(CarbonInterface::MONDAY)->toDateString() !== $date->toDateString()) {
+        // New weeks anchor to Sunday. Legacy plans stored on their original
+        // (Monday) start date remain directly reachable so past history renders.
+        $isSundayAnchored = $this->anchorToSunday($date)->toDateString() === $date->toDateString();
+
+        if (! $isSundayAnchored && ! $this->matchesExistingPlan($family, $date)) {
             throw ValidationException::withMessages([
-                'week' => __('Weekly plans must start on Monday.'),
+                'week' => __('Weekly plans must start on Sunday.'),
             ]);
         }
 
@@ -43,12 +48,12 @@ class ResolveWeeklyPlanWeek
 
     public function previousWeek(CarbonInterface $weekStart): CarbonInterface
     {
-        return $weekStart->copy()->subWeek()->startOfWeek(CarbonInterface::MONDAY);
+        return $this->anchorToSunday($weekStart->copy()->subWeek());
     }
 
     public function nextWeek(CarbonInterface $weekStart): CarbonInterface
     {
-        return $weekStart->copy()->addWeek()->startOfWeek(CarbonInterface::MONDAY);
+        return $this->anchorToSunday($weekStart->copy()->addWeek());
     }
 
     public function isPastWeek(Family $family, CarbonInterface $weekStart, ?CarbonInterface $now = null): bool
@@ -57,5 +62,23 @@ class ResolveWeeklyPlanWeek
             ->startOfDay();
 
         return $familyWeekStart->lt($this->currentWeekStart($family, $now));
+    }
+
+    /**
+     * Anchor a date to the Sunday that begins its week.
+     *
+     * Sunday is treated as the first day of the week (Sunday through Saturday),
+     * independent of Carbon's locale-driven default of Monday.
+     */
+    private function anchorToSunday(CarbonInterface $date): CarbonInterface
+    {
+        return $date->copy()->startOfDay()->subDays($date->dayOfWeek);
+    }
+
+    private function matchesExistingPlan(Family $family, CarbonInterface $date): bool
+    {
+        return $family->weeklyPlans()
+            ->whereDate('week_start_date', $date->toDateString())
+            ->exists();
     }
 }

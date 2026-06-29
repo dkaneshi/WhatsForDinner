@@ -38,8 +38,8 @@ test('dashboard data is scoped to the active family', function () {
     $user = User::factory()->create();
     $activeFamily = Family::factory()->for($user, 'head')->create(['name' => 'Visible Family', 'timezone' => 'UTC']);
     $otherFamily = Family::factory()->for($user, 'head')->create(['name' => 'Other Family', 'timezone' => 'UTC']);
-    $visiblePlan = $activeFamily->weeklyPlans()->create(['week_start_date' => '2026-06-22']);
-    $otherPlan = $otherFamily->weeklyPlans()->create(['week_start_date' => '2026-06-22']);
+    $visiblePlan = $activeFamily->weeklyPlans()->create(['week_start_date' => '2026-06-21']);
+    $otherPlan = $otherFamily->weeklyPlans()->create(['week_start_date' => '2026-06-21']);
 
     app(ScheduleWeeklyPlanEntry::class)->execute(
         $user,
@@ -72,7 +72,7 @@ test('grocery progress counts active unchecked and total items', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
     $family = Family::factory()->for($user, 'head')->create(['timezone' => 'UTC']);
-    $plan = $family->weeklyPlans()->create(['week_start_date' => '2026-06-22']);
+    $plan = $family->weeklyPlans()->create(['week_start_date' => '2026-06-21']);
     $dish = dashboardDish($family, 'Grocery Dinner', ProteinCategory::Beef, ['Apples']);
     app(ScheduleWeeklyPlanEntry::class)->execute($user, $plan, 1, WeeklyPlanEntrySlot::Main, dish: $dish);
     app(AddManualGroceryItem::class)->execute($plan->groceryList, 'Napkins');
@@ -86,21 +86,53 @@ test('grocery progress counts active unchecked and total items', function () {
     Carbon::setTestNow();
 });
 
-test('dashboard defaults to the current week on weekdays and the upcoming week on weekends in the family timezone', function () {
+test('dashboard defaults to the current week every day including weekends in the family timezone', function () {
     $user = User::factory()->create();
     Family::factory()->for($user, 'head')->create(['timezone' => 'Pacific/Honolulu']);
 
+    // Wednesday — current Sunday-anchored week.
     Carbon::setTestNow(Carbon::parse('2026-06-24 12:00:00', 'Pacific/Honolulu'));
 
     Livewire::actingAs($user)
         ->test('pages::dashboard')
-        ->assertSet('weekStartDate', '2026-06-22');
+        ->assertSet('weekStartDate', '2026-06-21');
 
+    // Saturday — still the current week, no longer jumps to the upcoming week.
     Carbon::setTestNow(Carbon::parse('2026-06-27 12:00:00', 'Pacific/Honolulu'));
 
     Livewire::actingAs($user)
         ->test('pages::dashboard')
-        ->assertSet('weekStartDate', '2026-06-29');
+        ->assertSet('weekStartDate', '2026-06-21');
+
+    // Sunday — the first day of the new week.
+    Carbon::setTestNow(Carbon::parse('2026-06-28 12:00:00', 'Pacific/Honolulu'));
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard')
+        ->assertSet('weekStartDate', '2026-06-28');
+
+    Carbon::setTestNow();
+});
+
+test('the dashboard shows weekend dinners on a seven-day plan', function () {
+    Carbon::setTestNow(Carbon::parse('2026-06-28 12:00:00', 'UTC'));
+
+    $user = User::factory()->create();
+    $family = Family::factory()->for($user, 'head')->create(['timezone' => 'UTC']);
+    $plan = $family->weeklyPlans()->create(['week_start_date' => '2026-06-28', 'includes_weekend' => true]);
+
+    app(ScheduleWeeklyPlanEntry::class)->execute(
+        $user,
+        $plan,
+        7,
+        WeeklyPlanEntrySlot::Main,
+        dish: dashboardDish($family, 'Sunday Roast', ProteinCategory::Beef),
+    );
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard')
+        ->assertSeeInOrder(['Sunday', 'Sunday Roast'])
+        ->assertSee('Saturday');
 
     Carbon::setTestNow();
 });
@@ -151,8 +183,8 @@ test('switching families refreshes all dashboard content', function () {
     $user = User::factory()->create();
     $firstFamily = Family::factory()->for($user, 'head')->create(['name' => 'First Family', 'timezone' => 'UTC']);
     $secondFamily = Family::factory()->for($user, 'head')->create(['name' => 'Second Family', 'timezone' => 'UTC']);
-    $firstPlan = $firstFamily->weeklyPlans()->create(['week_start_date' => '2026-06-22']);
-    $secondPlan = $secondFamily->weeklyPlans()->create(['week_start_date' => '2026-06-22']);
+    $firstPlan = $firstFamily->weeklyPlans()->create(['week_start_date' => '2026-06-21']);
+    $secondPlan = $secondFamily->weeklyPlans()->create(['week_start_date' => '2026-06-21']);
 
     app(ScheduleWeeklyPlanEntry::class)->execute(
         $user,

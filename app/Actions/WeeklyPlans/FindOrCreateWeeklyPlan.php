@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Gate;
 class FindOrCreateWeeklyPlan
 {
     /**
-     * Find or create a family's Monday-based weekly plan.
+     * Find or create a family's Sunday-anchored weekly plan.
      */
     public function execute(User $user, Family $family, CarbonInterface $weekStart): WeeklyPlan
     {
@@ -30,6 +30,7 @@ class FindOrCreateWeeklyPlan
         try {
             return $family->weeklyPlans()->create([
                 'week_start_date' => $weekStartDate,
+                'includes_weekend' => true,
             ]);
         } catch (QueryException $exception) {
             $existingPlan = $family->weeklyPlans()

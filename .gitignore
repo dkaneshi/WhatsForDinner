@@ -26,3 +26,4 @@ yarn-error.log
 .junie/mcp/mcp.json
 .claude/mcp/mcp.json
 .codex/mcp/mcp.json
+.DS_Store

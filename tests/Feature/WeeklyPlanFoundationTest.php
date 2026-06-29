@@ -10,6 +10,7 @@ use App\Models\WeeklyPlan;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 
 test('duplicate plans cannot be created for the same family and week', function () {
@@ -42,16 +43,18 @@ test('plans with the same week may exist for different families', function () {
 });
 
 test('time-zone boundaries correctly determine current and past weeks', function () {
-    Carbon::setTestNow(Carbon::parse('2026-06-29 09:30:00', 'UTC'));
+    // At this instant Honolulu is still Saturday (prior Sunday week) while
+    // Kiritimati has already crossed into the new Sunday-anchored week.
+    Carbon::setTestNow(Carbon::parse('2026-06-28 00:00:00', 'UTC'));
 
     $resolver = app(ResolveWeeklyPlanWeek::class);
     $hawaiiFamily = Family::factory()->create(['timezone' => 'Pacific/Honolulu']);
     $kiritimatiFamily = Family::factory()->create(['timezone' => 'Pacific/Kiritimati']);
 
-    expect($resolver->currentWeekStart($hawaiiFamily)->toDateString())->toBe('2026-06-22')
-        ->and($resolver->currentWeekStart($kiritimatiFamily)->toDateString())->toBe('2026-06-29')
-        ->and($resolver->isPastWeek($hawaiiFamily, Carbon::parse('2026-06-22', 'Pacific/Honolulu')))->toBeFalse()
-        ->and($resolver->isPastWeek($kiritimatiFamily, Carbon::parse('2026-06-22', 'Pacific/Kiritimati')))->toBeTrue();
+    expect($resolver->currentWeekStart($hawaiiFamily)->toDateString())->toBe('2026-06-21')
+        ->and($resolver->currentWeekStart($kiritimatiFamily)->toDateString())->toBe('2026-06-28')
+        ->and($resolver->isPastWeek($hawaiiFamily, Carbon::parse('2026-06-21', 'Pacific/Honolulu')))->toBeFalse()
+        ->and($resolver->isPastWeek($kiritimatiFamily, Carbon::parse('2026-06-21', 'Pacific/Kiritimati')))->toBeTrue();
 
     Carbon::setTestNow();
 });
@@ -105,16 +108,16 @@ test('first visit creates only one plan across repeated requests', function () {
 
     Livewire::actingAs($head)
         ->test('pages::weekly-plan')
-        ->assertSet('weekStartDate', '2026-06-29')
+        ->assertSet('weekStartDate', '2026-06-28')
         ->assertSee('Editable');
 
     Livewire::actingAs($head)
         ->test('pages::weekly-plan')
-        ->assertSet('weekStartDate', '2026-06-29');
+        ->assertSet('weekStartDate', '2026-06-28');
 
     $plan = $family->weeklyPlans()->sole();
 
-    expect($plan->week_start_date->toDateString())->toBe('2026-06-29');
+    expect($plan->week_start_date->toDateString())->toBe('2026-06-28');
 
     Carbon::setTestNow();
 });
@@ -165,4 +168,42 @@ test('users without a family are redirected to family setup', function () {
     $this->actingAs($user)
         ->get(route('weekly-plans.show'))
         ->assertRedirect(route('families.index'));
+});
+
+test('new plans include the weekend by default', function () {
+    $family = Family::factory()->create();
+    $plan = WeeklyPlan::factory()->for($family)->create();
+
+    expect($plan->includes_weekend)->toBeTrue()
+        ->and($plan->orderedWeekdays())->toBe([7, 1, 2, 3, 4, 5, 6]);
+});
+
+test('legacy plans keep the five Monday-through-Friday days', function () {
+    $plan = WeeklyPlan::factory()->legacy()->create();
+
+    expect($plan->includes_weekend)->toBeFalse()
+        ->and($plan->orderedWeekdays())->toBe([1, 2, 3, 4, 5]);
+});
+
+test('the backfill sets current and future plans to 7-day and leaves past plans 5-day', function () {
+    Carbon::setTestNow(Carbon::parse('2026-06-29 12:00:00', 'UTC'));
+
+    $family = Family::factory()->create(['timezone' => 'UTC']);
+    $pastPlan = WeeklyPlan::factory()->for($family)->create(['week_start_date' => '2026-06-21']);
+    $currentPlan = WeeklyPlan::factory()->for($family)->create(['week_start_date' => '2026-06-28']);
+    $futurePlan = WeeklyPlan::factory()->for($family)->create(['week_start_date' => '2026-07-05']);
+
+    // Simulate the pre-migration schema, then run the migration's backfill.
+    Schema::table('weekly_plans', function ($table): void {
+        $table->dropColumn('includes_weekend');
+    });
+
+    $migration = require database_path('migrations/2026_06_29_024711_add_includes_weekend_to_weekly_plans_table.php');
+    $migration->up();
+
+    expect($pastPlan->fresh()->includes_weekend)->toBeFalse()
+        ->and($currentPlan->fresh()->includes_weekend)->toBeTrue()
+        ->and($futurePlan->fresh()->includes_weekend)->toBeTrue();
+
+    Carbon::setTestNow();
 });

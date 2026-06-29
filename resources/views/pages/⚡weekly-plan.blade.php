@@ -38,6 +38,8 @@ new #[Title('Weekly Plan')] class extends Component {
 
     public array $specialSelections = [];
 
+    private ?WeeklyPlan $resolvedWeeklyPlan = null;
+
     public function mount(
         ResolveActiveFamily $resolveActiveFamily,
         ResolveWeeklyPlanWeek $resolveWeeklyPlanWeek,
@@ -187,9 +189,15 @@ new #[Title('Weekly Plan')] class extends Component {
     public function weekLabel(): string
     {
         $weekStart = $this->weekStart();
-        $weekEnd = $weekStart->copy()->addDays(4);
+        $dayCount = $this->weeklyPlan()->includes_weekend ? 7 : 5;
+        $weekEnd = $weekStart->copy()->addDays($dayCount - 1);
 
         return $weekStart->format('M j').'–'.$weekEnd->format('M j, Y');
+    }
+
+    public function includesWeekend(): bool
+    {
+        return $this->weeklyPlan()->includes_weekend;
     }
 
     public function completionLabel(): string
@@ -197,23 +205,36 @@ new #[Title('Weekly Plan')] class extends Component {
         $filledMainSlots = $this->weeklyPlan()
             ->entries()
             ->where('slot', WeeklyPlanEntrySlot::Main)
+            ->whereBetween('weekday', [1, 5])
             ->count();
 
         return __(':filled of 5 main dinners planned', ['filled' => $filledMainSlots]);
     }
 
     /**
+     * Sunday-first weekday labels for the plan's day count.
+     *
      * @return array<int, string>
      */
     public function weekdayLabels(): array
     {
-        return [
+        $names = [
+            7 => __('Sunday'),
             1 => __('Monday'),
             2 => __('Tuesday'),
             3 => __('Wednesday'),
             4 => __('Thursday'),
             5 => __('Friday'),
+            6 => __('Saturday'),
         ];
+
+        $labels = [];
+
+        foreach ($this->weeklyPlan()->orderedWeekdays() as $weekday) {
+            $labels[$weekday] = $names[$weekday];
+        }
+
+        return $labels;
     }
 
     /**
@@ -269,7 +290,9 @@ new #[Title('Weekly Plan')] class extends Component {
 
     private function weeklyPlan(): WeeklyPlan
     {
-        return $this->activeFamily()->weeklyPlans()->findOrFail($this->weeklyPlanId);
+        return $this->resolvedWeeklyPlan ??= $this->activeFamily()
+            ->weeklyPlans()
+            ->findOrFail($this->weeklyPlanId);
     }
 
     private function setSelectionDefaults(): void
@@ -317,7 +340,7 @@ new #[Title('Weekly Plan')] class extends Component {
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <flux:heading>{{ $this->weekLabel() }}</flux:heading>
-                <flux:text>{{ __('Week starts Monday, :date', ['date' => $weekStartDate]) }}</flux:text>
+                <flux:text>{{ __('Week starts Sunday, :date', ['date' => $weekStartDate]) }}</flux:text>
             </div>
 
             <div class="flex flex-wrap gap-2">
@@ -349,7 +372,7 @@ new #[Title('Weekly Plan')] class extends Component {
                 @endif
             </div>
 
-            <div class="grid gap-4 lg:grid-cols-5">
+            <div class="grid gap-4 {{ $this->includesWeekend() ? 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7' : 'lg:grid-cols-5' }}">
                 @foreach ($this->weekdayLabels() as $weekday => $weekdayLabel)
                     @php
                         $entries = $this->entriesByWeekday->get($weekday, collect());
