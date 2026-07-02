@@ -37,6 +37,8 @@ new #[Title('Grocery List')] class extends Component {
 
     public string $manualItemName = '';
 
+    private ?Family $resolvedActiveFamily = null;
+
     public function mount(
         ResolveActiveFamily $resolveActiveFamily,
         ResolveWeeklyPlanWeek $resolveWeeklyPlanWeek,
@@ -197,7 +199,7 @@ new #[Title('Grocery List')] class extends Component {
 
     private function activeFamily(): Family
     {
-        return $this->user()->families()->findOrFail($this->activeFamilyId);
+        return $this->resolvedActiveFamily ??= $this->user()->families()->findOrFail($this->activeFamilyId);
     }
 
     private function weeklyPlan(): WeeklyPlan

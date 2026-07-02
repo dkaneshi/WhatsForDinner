@@ -2,6 +2,7 @@
 
 use App\Actions\Families\ResolveActiveFamily;
 use App\Actions\WeeklyPlans\FindOrCreateWeeklyPlan;
+use App\Actions\WeeklyPlans\MarkWeeklyPlanEntryFresh;
 use App\Actions\WeeklyPlans\RemoveWeeklyPlanEntry;
 use App\Actions\WeeklyPlans\RegenerateWeeklyPlanSuggestions;
 use App\Actions\WeeklyPlans\ResolveWeeklyPlanWeek;
@@ -39,6 +40,8 @@ new #[Title('Weekly Plan')] class extends Component {
     public array $specialSelections = [];
 
     private ?WeeklyPlan $resolvedWeeklyPlan = null;
+
+    private ?Family $resolvedActiveFamily = null;
 
     public function mount(
         ResolveActiveFamily $resolveActiveFamily,
@@ -141,13 +144,11 @@ new #[Title('Weekly Plan')] class extends Component {
         Flux::toast(variant: 'success', text: __('Dinner removed.'));
     }
 
-    public function markFresh(int $entryId): void
+    public function markFresh(int $entryId, MarkWeeklyPlanEntryFresh $markWeeklyPlanEntryFresh): void
     {
         $entry = $this->weeklyPlan()->entries()->findOrFail($entryId);
 
-        Gate::authorize('update', $entry->weeklyPlan);
-
-        $entry->update(['is_leftovers' => false]);
+        $markWeeklyPlanEntryFresh->execute($this->user(), $entry);
         $this->refreshPlanData();
 
         Flux::toast(variant: 'success', text: __('Marked as cooked fresh.'));
@@ -258,7 +259,7 @@ new #[Title('Weekly Plan')] class extends Component {
     {
         return $this->weeklyPlan()
             ->entries()
-            ->with('dish')
+            ->with('dish.ingredients')
             ->orderBy('weekday')
             ->orderBy('slot')
             ->get()
@@ -285,7 +286,7 @@ new #[Title('Weekly Plan')] class extends Component {
 
     private function activeFamily(): Family
     {
-        return $this->user()->families()->findOrFail($this->activeFamilyId);
+        return $this->resolvedActiveFamily ??= $this->user()->families()->findOrFail($this->activeFamilyId);
     }
 
     private function weeklyPlan(): WeeklyPlan

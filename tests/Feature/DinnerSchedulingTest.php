@@ -3,6 +3,7 @@
 use App\Actions\WeeklyPlans\ScheduleWeeklyPlanEntry;
 use App\Models\Dish;
 use App\Models\Family;
+use App\Models\Ingredient;
 use App\Models\User;
 use App\Models\WeeklyPlan;
 use App\Models\WeeklyPlanEntry;
@@ -193,6 +194,32 @@ test('a member can remove the leftovers designation', function () {
         ->assertHasNoErrors();
 
     expect($leftovers->fresh()->is_leftovers)->toBeFalse();
+
+    Carbon::setTestNow();
+});
+
+test('removing the leftovers designation refreshes grocery source labels', function () {
+    [$head, $family, $plan] = schedulingFixture();
+    $dish = Dish::factory()->for($family)->create(['name' => 'Pot Roast']);
+    $ingredient = Ingredient::factory()->for($family)->create();
+    $dish->ingredients()->attach($ingredient, ['is_main_protein' => true]);
+    $action = app(ScheduleWeeklyPlanEntry::class);
+
+    $action->execute($head, $plan, 7, WeeklyPlanEntrySlot::Main, dish: $dish);
+    $monday = $action->execute($head, $plan, 1, WeeklyPlanEntrySlot::Main, dish: $dish);
+
+    $item = $plan->groceryList->items()->firstOrFail();
+
+    expect($item->source_labels)->toContain('Leftovers: Pot Roast');
+
+    Livewire::actingAs($head)
+        ->test('pages::weekly-plan')
+        ->call('markFresh', $monday->id)
+        ->assertHasNoErrors();
+
+    expect($item->fresh()->source_labels)
+        ->not->toContain('Leftovers: Pot Roast')
+        ->toContain('Pot Roast');
 
     Carbon::setTestNow();
 });

@@ -35,6 +35,8 @@ new #[Title('Ingredients')] class extends Component {
 
     public string $editProteinCategory = '';
 
+    private ?Family $resolvedActiveFamily = null;
+
     public function mount(ResolveActiveFamily $resolveActiveFamily): void
     {
         $family = $resolveActiveFamily->execute($this->user());
@@ -128,7 +130,7 @@ new #[Title('Ingredients')] class extends Component {
 
     private function activeFamily(): Family
     {
-        return $this->user()->families()->findOrFail($this->activeFamilyId);
+        return $this->resolvedActiveFamily ??= $this->user()->families()->findOrFail($this->activeFamilyId);
     }
 
     private function user(): User

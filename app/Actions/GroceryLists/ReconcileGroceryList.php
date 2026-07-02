@@ -73,7 +73,7 @@ class ReconcileGroceryList
     public function requiredItems(WeeklyPlan $weeklyPlan): Collection
     {
         $items = $weeklyPlan->entries()
-            ->with('dish')
+            ->with('dish.ingredients')
             ->whereNotNull('dish_id')
             ->get()
             ->flatMap(function (WeeklyPlanEntry $entry): array {

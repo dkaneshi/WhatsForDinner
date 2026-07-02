@@ -36,6 +36,8 @@ new #[Title('Dashboard')] class extends Component {
 
     private ?WeeklyPlan $resolvedWeeklyPlan = null;
 
+    private ?Family $resolvedActiveFamily = null;
+
     public function mount(
         ResolveActiveFamily $resolveActiveFamily,
         FindOrCreateWeeklyPlan $findOrCreateWeeklyPlan,
@@ -204,7 +206,7 @@ new #[Title('Dashboard')] class extends Component {
 
     private function activeFamily(): Family
     {
-        return $this->user()->families()->findOrFail($this->activeFamilyId);
+        return $this->resolvedActiveFamily ??= $this->user()->families()->findOrFail($this->activeFamilyId);
     }
 
     private function weeklyPlan(): WeeklyPlan
@@ -223,6 +225,7 @@ new #[Title('Dashboard')] class extends Component {
 
         $this->activeFamilyId = $family->id;
         $this->selectedFamilyId = $family->id;
+        $this->resolvedActiveFamily = $family;
 
         $weekStart = $this->defaultWeekStart($family);
         $weeklyPlan = $findOrCreateWeeklyPlan->execute($this->user(), $family, $weekStart);
