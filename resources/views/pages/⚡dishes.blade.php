@@ -7,6 +7,8 @@ use App\Actions\Dishes\ReplaceArchivedDish;
 use App\Actions\Dishes\RestoreDish;
 use App\Actions\Dishes\UpdateDish;
 use App\Actions\Families\ResolveActiveFamily;
+use App\Actions\Ingredients\CreateIngredient;
+use App\Actions\Ingredients\NormalizeIngredientName;
 use App\Models\Dish;
 use App\Models\Family;
 use App\Models\Ingredient;
@@ -38,6 +40,10 @@ new #[Title('Dishes')] class extends Component {
     public array $ingredientIds = [];
 
     public ?int $mainProteinIngredientId = null;
+
+    public string $newIngredientName = '';
+
+    public string $newIngredientProteinCategory = '';
 
     #[Locked]
     public ?int $activeFamilyId = null;
@@ -89,6 +95,45 @@ new #[Title('Dishes')] class extends Component {
         }
 
         $this->resetValidation(['ingredient_ids', 'main_protein_ingredient_id']);
+    }
+
+    public function addIngredient(
+        CreateIngredient $createIngredient,
+        NormalizeIngredientName $normalizeIngredientName,
+    ): void {
+        $this->resetValidation(['new_ingredient_name', 'new_ingredient_protein_category']);
+
+        try {
+            $ingredient = $createIngredient->execute($this->user(), $this->activeFamily(), [
+                'name' => $this->newIngredientName,
+                'protein_category' => $this->newIngredientProteinCategory ?: null,
+            ]);
+        } catch (ValidationException $exception) {
+            $normalizedName = $normalizeIngredientName->execute($this->newIngredientName)['normalized_name'];
+            $existing = $this->activeFamily()->ingredients()
+                ->where('normalized_name', $normalizedName)
+                ->first();
+
+            if ($existing) {
+                $this->selectIngredient($existing->id);
+                $this->reset('newIngredientName', 'newIngredientProteinCategory');
+
+                return;
+            }
+
+            foreach ($exception->errors() as $key => $messages) {
+                $field = $key === 'name' ? 'new_ingredient_name' : 'new_ingredient_protein_category';
+                $this->addError($field, $messages[0]);
+            }
+
+            return;
+        }
+
+        $this->selectIngredient($ingredient->id);
+        unset($this->ingredients);
+        $this->reset('newIngredientName', 'newIngredientProteinCategory');
+
+        Flux::toast(variant: 'success', text: __('Ingredient added.'));
     }
 
     public function startCreating(): void
@@ -204,10 +249,19 @@ new #[Title('Dishes')] class extends Component {
             'note',
             'ingredientIds',
             'mainProteinIngredientId',
+            'newIngredientName',
+            'newIngredientProteinCategory',
             'editingDishId',
             'archivedConflictDishId',
         );
         $this->resetValidation();
+    }
+
+    private function selectIngredient(int $ingredientId): void
+    {
+        if (! in_array($ingredientId, $this->integerIngredientIds(), true)) {
+            $this->ingredientIds[] = $ingredientId;
+        }
     }
 
     /** @return Collection<int, Dish> */
@@ -438,12 +492,39 @@ new #[Title('Dishes')] class extends Component {
                         @endif
                     </label>
                 @empty
-                    <flux:callout variant="warning" icon="list-bullet" heading="{{ __('Ingredients required') }}">
-                        <flux:link :href="route('ingredients.index')" wire:navigate>{{ __('Add ingredients before creating a dish.') }}</flux:link>
-                    </flux:callout>
+                    <flux:text class="text-sm">{{ __('No ingredients yet. Add your first one below.') }}</flux:text>
                 @endforelse
 
                 <flux:error name="ingredient_ids" />
+
+                <div class="rounded-lg border border-dashed border-zinc-200 p-4 dark:border-zinc-700">
+                    <flux:heading size="sm">{{ __('Add new ingredient') }}</flux:heading>
+                    <flux:text class="mt-1">{{ __('Create a missing ingredient without leaving this form.') }}</flux:text>
+
+                    <div class="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end">
+                        <flux:input
+                            wire:model="newIngredientName"
+                            :label="__('Name')"
+                            wire:keydown.enter.prevent="addIngredient"
+                        />
+
+                        <flux:select wire:model="newIngredientProteinCategory" :label="__('Category (optional)')">
+                            <flux:select.option value="">{{ __('None') }}</flux:select.option>
+                            @foreach (ProteinCategory::cases() as $category)
+                                <flux:select.option wire:key="new-ingredient-category-{{ $category->value }}" :value="$category->value">
+                                    {{ $category->label() }}
+                                </flux:select.option>
+                            @endforeach
+                        </flux:select>
+
+                        <flux:button type="button" icon="plus" wire:click="addIngredient" wire:loading.attr="disabled">
+                            {{ __('Add') }}
+                        </flux:button>
+                    </div>
+
+                    <flux:error name="new_ingredient_name" />
+                    <flux:error name="new_ingredient_protein_category" />
+                </div>
             </div>
 
             <div class="flex justify-end gap-2">

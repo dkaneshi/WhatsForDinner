@@ -608,3 +608,42 @@ Weekly plans cover a full Sunday-through-Saturday week, so a family's entire wee
 - R1-12 / R1-13 (Grocery): no rule change; weekend dishes contribute to the single weekly list automatically once scheduled.
 - R1-14 (Dashboard): remove the weekend default-week rule; the summary spans seven Sunday-first days for 7-day plans.
 - R1-15 (Mobile): the planning grid and dashboard summary are verified at seven Sunday-first days on phone and desktop.
+
+### R1-17 — Inline Ingredient Creation in the Dish Form
+
+#### Outcome
+
+While creating or editing a dish, a member can add a missing ingredient to the family's collection without leaving the dish form, so a half-built dish is never lost to a detour through the Ingredients page.
+
+#### Decisions Locked
+
+- The control is an inline "add new ingredient" row inside the existing dish create/edit modal, not a combobox rework or a nested second modal.
+- A newly added ingredient is saved to the family's ingredient collection immediately and persists even if the dish is later cancelled. Ingredients are reusable library records, consistent with R1-05.
+- The inline row captures a name and an optional protein category. When a category is set, the ingredient becomes eligible as the dish's main protein.
+- If the typed name matches an existing family ingredient (normalized, ignoring capitalization and extra whitespace), the existing ingredient is selected rather than raising a duplicate error.
+- The behavior applies identically to both create and edit dish modes.
+
+#### Requirements
+
+- Add an inline "add new ingredient" row to the dish modal in `resources/views/pages/⚡dishes.blade.php`: a name input, an optional protein-category selector, and an Add button. Adding an ingredient must not submit the dish form.
+- Reuse the existing `App\Actions\Ingredients\CreateIngredient` action for creation and validation (name required, `max:100`, protein category limited to the `ProteinCategory` enum). No validation rules are duplicated in the Livewire component.
+- On success, the new ingredient appears in the ingredient list already selected, the main-protein select refreshes when a category was supplied, the inline inputs clear, and a success toast confirms.
+- On a normalized-name match with an existing ingredient, select the existing ingredient, clear the inline inputs, and do not raise a duplicate error.
+- Surface inline validation errors (blank name, over-length name, invalid category) on a scoped error field within the modal, without discarding the in-progress dish form state.
+- Soften the "add ingredients first" empty state so the first ingredient can be created inline; keep the Create/Save dish action disabled only while the family collection is genuinely empty and no ingredient has yet been added.
+- Authorize the inline creation against the active family via the `create` ability for `Ingredient`, consistent with the standalone Ingredients page.
+- Scope is limited to the dish create/edit modal; the standalone Ingredients page, Markdown import, grocery, and weekly-plan surfaces are unchanged.
+
+#### Acceptance Tests
+
+- Adding a new ingredient inline creates it in the active family's collection and auto-selects it in the dish form.
+- Adding a new ingredient with a protein category makes it selectable as the dish's main protein.
+- Typing a name that matches an existing ingredient (ignoring capitalization and whitespace) selects the existing ingredient without creating a duplicate or raising an error.
+- A blank or over-length name shows a validation error inside the modal and creates no ingredient.
+- An ingredient added inline persists to the family collection even when the dish modal is cancelled.
+- Inline creation is rejected for a user who does not belong to the active family.
+- The inline flow behaves identically in both create and edit dish modes.
+
+#### Amendments to Existing Specs
+
+- R1-06 (Dish Collection): dish creation and editing may add a new family ingredient inline from the dish form; this does not change dish validation, which still requires at least one ingredient and exactly one main protein.
