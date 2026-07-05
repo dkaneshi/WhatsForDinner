@@ -10,7 +10,19 @@ use App\Models\WeeklyPlanEntry;
 use App\Models\WeeklyPlanSuggestion;
 use App\ProteinCategory;
 use App\WeeklyPlanEntrySlot;
+use Illuminate\Support\Carbon;
 use Livewire\Livewire;
+
+beforeEach(function () {
+    // Pin "now" inside the Sunday-anchored week of 2026-06-28 so the plans these
+    // tests create stay current-or-future and remain editable regardless of the
+    // real date. Without this the suite breaks once real time crosses a week.
+    Carbon::setTestNow(Carbon::parse('2026-06-29 12:00:00', 'UTC'));
+});
+
+afterEach(function () {
+    Carbon::setTestNow();
+});
 
 function suggestionDish(Family $family, ProteinCategory $category, string $name): Dish
 {
