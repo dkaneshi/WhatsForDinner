@@ -228,7 +228,7 @@ new #[Title('Security settings')] class extends Component {
 
         <section class="mt-12">
             <flux:heading>{{ __('Social sign-in') }}</flux:heading>
-            <flux:subheading>{{ __('Use Google, GitHub, or Apple as an additional way to sign in') }}</flux:subheading>
+            <flux:subheading>{{ __('Use Google or GitHub as an additional way to sign in') }}</flux:subheading>
 
             <div class="mt-6 flex flex-col items-start gap-4">
                 @if (auth()->user()->workos_user_id)

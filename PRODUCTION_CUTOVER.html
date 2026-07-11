@@ -163,7 +163,7 @@
     <header>
         <div class="eyebrow">Controlled production cutover</div>
         <h1>WorkOS Social Login</h1>
-        <p class="lede">Operational runbook for launching Google, GitHub, and Apple authentication in WhatsForDinner while preserving Laravel Fortify password, passkey, email-verification, and TOTP flows.</p>
+        <p class="lede">Operational runbook for launching Google and GitHub authentication in WhatsForDinner while preserving Laravel Fortify password, passkey, email-verification, and TOTP flows.</p>
 
         <div class="metadata">
             <div class="field"><strong>Production URL</strong>________________________________</div>
@@ -194,7 +194,7 @@
         <ul class="checklist">
             <li><input type="checkbox" aria-label="Reviewed and committed release"><span>The implementation is reviewed, committed, pushed, and identified by a release tag or immutable commit.</span></li>
             <li><input type="checkbox" aria-label="Automated checks passed"><span>Automated tests, PHPStan, Pint, frontend build, and dependency audit pass for the release candidate.</span></li>
-            <li><input type="checkbox" aria-label="Staging journeys passed"><span>Google, GitHub, Apple, account linking, cancellation, TOTP, and WorkOS step-up confirmation pass end to end in staging.</span></li>
+            <li><input type="checkbox" aria-label="Staging journeys passed"><span>Google, GitHub, account linking, cancellation, TOTP, and WorkOS step-up confirmation pass end to end in staging.</span></li>
             <li><input type="checkbox" aria-label="Production HTTPS ready"><span>Production DNS and TLS are active and <code>APP_URL</code> uses the final HTTPS origin.</span></li>
             <li><input type="checkbox" aria-label="Database backup ready"><span>A restorable production database backup exists and its restoration procedure is known.</span></li>
             <li><input type="checkbox" aria-label="Rollback release ready"><span>The prior known-good application release is available for immediate redeployment.</span></li>
@@ -261,14 +261,7 @@
             <li><input type="checkbox" aria-label="GitHub enabled"><span>GitHub enabled in WorkOS Production.</span></li>
         </ul>
 
-        <h3>Apple</h3>
-        <ul class="checklist">
-            <li><input type="checkbox" aria-label="Apple credentials ready"><span>Apple Team ID, Service ID, private key, and key ID created for production.</span></li>
-            <li><input type="checkbox" aria-label="Apple redirect ready"><span>The WorkOS-provided Apple redirect URI is registered in Apple Developer.</span></li>
-            <li><input type="checkbox" aria-label="Apple relay ready"><span>WorkOS outbound email domains are registered as Apple Private Email Relay sources.</span></li>
-            <li><input type="checkbox" aria-label="Apple enabled"><span>Apple enabled in WorkOS Production using the application's credentials.</span></li>
-        </ul>
-        <div class="callout">Do not launch Apple until relay-address email delivery is verified. Hidden-email users may authenticate even when invitations and password-reset messages cannot reach them.</div>
+        <div class="callout"><strong>Provider scope:</strong> Apple and all other social providers must remain disabled in both WorkOS staging and production.</div>
     </section>
 
     <section id="secrets">
@@ -344,13 +337,11 @@ php artisan queue:restart</code></pre>
             <tr><td>TOTP and recovery code</td><td>Challenge is enforced and recovery code is single-use.</td><td>________________</td></tr>
             <tr><td>New Google registration</td><td>Verified local user created and dashboard reached.</td><td>________________</td></tr>
             <tr><td>New GitHub registration</td><td>Verified local user created and dashboard reached.</td><td>________________</td></tr>
-            <tr><td>New Apple registration</td><td>Verified local user created; relay choice handled.</td><td>________________</td></tr>
             <tr><td>Existing-email collision</td><td>No silent link or duplicate; guidance is displayed.</td><td>________________</td></tr>
             <tr><td>Explicit account linking</td><td>Only the matching verified identity links.</td><td>________________</td></tr>
             <tr><td>Social-only Security access</td><td>Fresh WorkOS step-up confirms identity and returns to Security.</td><td>________________</td></tr>
             <tr><td>Provider cancellation</td><td>User remains safe and receives a recoverable message.</td><td>________________</td></tr>
             <tr><td>Family invitation</td><td>Invited social user can accept only under the invited email.</td><td>________________</td></tr>
-            <tr><td>Apple relay email</td><td>Invitation and password-reset email reaches relay inbox.</td><td>________________</td></tr>
             <tr><td>Phone and desktop</td><td>Login, callback errors, and confirmation UI remain accessible.</td><td>________________</td></tr>
             </tbody>
         </table>
@@ -364,7 +355,7 @@ php artisan queue:restart</code></pre>
             <li><input type="checkbox" aria-label="Public access open"><span>Public access or release flag enabled.</span></li>
             <li><input type="checkbox" aria-label="Logs monitored"><span>Laravel callback failures, identity mismatches, collision notices, and HTTP 429 responses monitored.</span></li>
             <li><input type="checkbox" aria-label="WorkOS monitored"><span>WorkOS Production Users and Sessions monitored for expected creation and provider methods.</span></li>
-            <li><input type="checkbox" aria-label="Mail monitored"><span>Invitation, verification, reset, and Apple relay email delivery monitored.</span></li>
+            <li><input type="checkbox" aria-label="Mail monitored"><span>Invitation, verification, and password-reset email delivery monitored.</span></li>
             <li><input type="checkbox" aria-label="Support informed"><span>Support owner has collision, linking, cancellation, and provider-outage guidance.</span></li>
         </ul>
         <h3>Monitoring cadence</h3>
@@ -422,7 +413,6 @@ php artisan queue:restart</code></pre>
             <li><a href="https://workos.com/docs/authkit/sessions">AuthKit sessions</a></li>
             <li><a href="https://workos.com/docs/authkit/reauthentication">AuthKit reauthentication</a></li>
             <li><a href="https://workos.com/docs/authkit/social-login">AuthKit social login</a></li>
-            <li><a href="https://workos.com/docs/integrations/apple">Sign in with Apple and Private Email Relay</a></li>
             <li><a href="https://workos.com/docs/reference/api-authentication">WorkOS API authentication</a></li>
         </ul>
     </section>

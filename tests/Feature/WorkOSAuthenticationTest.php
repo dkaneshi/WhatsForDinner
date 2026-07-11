@@ -101,11 +101,11 @@ beforeEach(function () {
 test('login and registration expose the hosted social login entry point', function () {
     $this->get(route('login'))
         ->assertOk()
-        ->assertSee('Continue with Google, GitHub, or Apple');
+        ->assertSee('Continue with Google or GitHub');
 
     $this->get(route('register'))
         ->assertOk()
-        ->assertSee('Continue with Google, GitHub, or Apple');
+        ->assertSee('Continue with Google or GitHub');
 });
 
 test('starting social authentication stores hashed expiring state and uses the configured callback', function () {
@@ -135,25 +135,6 @@ test('a new verified WorkOS user is created and authenticated', function () {
         ->and($user->hasVerifiedEmail())->toBeTrue();
 
     $this->assertAuthenticatedAs($user);
-});
-
-test('an Apple private relay address may create a new account', function () {
-    $this->workOS->identity = new WorkOSIdentity(
-        id: 'user_apple_123',
-        email: 'private@privaterelay.appleid.com',
-        emailVerified: true,
-        name: null,
-    );
-
-    $state = ($this->beginWorkOSLogin)();
-
-    $this->get(route('workos.callback', ['state' => $state, 'code' => 'apple-code']))
-        ->assertRedirect('/dashboard');
-
-    $user = User::query()->where('workos_user_id', 'user_apple_123')->firstOrFail();
-
-    expect($user->email)->toBe('private@privaterelay.appleid.com')
-        ->and($user->name)->toBe('private');
 });
 
 test('a returning WorkOS user is authenticated without provider profile overwrites', function () {
@@ -313,17 +294,17 @@ test('a linking callback cannot switch users or replace an existing WorkOS ident
     expect($firstUser->refresh()->workos_user_id)->toBe('user_original');
 });
 
-test('linking rejects mismatched Apple relay email and an identity owned by another user', function () {
+test('linking rejects a mismatched email and an identity owned by another user', function () {
     $user = User::factory()->create(['email' => 'person@example.com']);
     $this->workOS->identity = new WorkOSIdentity(
-        id: 'user_apple_private',
-        email: 'private@privaterelay.appleid.com',
+        id: 'user_mismatched',
+        email: 'different@example.com',
         emailVerified: true,
         name: null,
     );
     $state = ($this->beginWorkOSLink)($user);
 
-    $this->get(route('workos.callback', ['state' => $state, 'code' => 'apple-code']))
+    $this->get(route('workos.callback', ['state' => $state, 'code' => 'mismatched-code']))
         ->assertRedirect(route('security.edit'))
         ->assertSessionHasErrors('workos');
 
@@ -393,14 +374,14 @@ test('the confirmation page offers WorkOS only to linked users', function () {
         ->get(route('password.confirm'))
         ->assertOk()
         ->assertSee('Confirm your identity')
-        ->assertDontSee('Confirm with Google, GitHub, or Apple');
+        ->assertDontSee('Confirm with Google or GitHub');
 
     $linked = User::factory()->create(['workos_user_id' => 'user_workos_123']);
 
     $this->actingAs($linked)
         ->get(route('password.confirm'))
         ->assertOk()
-        ->assertSee('Confirm with Google, GitHub, or Apple');
+        ->assertSee('Confirm with Google or GitHub');
 });
 
 test('starting WorkOS confirmation requires a verified linked user and forces fresh authentication', function () {

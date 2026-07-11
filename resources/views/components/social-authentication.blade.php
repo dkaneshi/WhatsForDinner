@@ -13,7 +13,7 @@
         class="w-full"
         data-test="workos-auth-button"
     >
-        {{ __('Continue with Google, GitHub, or Apple') }}
+        {{ __('Continue with Google or GitHub') }}
     </flux:button>
 
     <flux:error name="workos" />

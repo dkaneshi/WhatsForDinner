@@ -12,7 +12,7 @@
             <form method="POST" action="{{ route('workos.confirm') }}">
                 @csrf
                 <flux:button type="submit" variant="outline" class="w-full" data-test="confirm-workos-button">
-                    {{ __('Confirm with Google, GitHub, or Apple') }}
+                    {{ __('Confirm with Google or GitHub') }}
                 </flux:button>
             </form>
 
