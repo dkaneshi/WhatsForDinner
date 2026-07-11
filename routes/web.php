@@ -1,8 +1,23 @@
 <?php
 
+use App\Http\Controllers\Auth\WorkOSCallbackController;
+use App\Http\Controllers\Auth\WorkOSConfirmController;
+use App\Http\Controllers\Auth\WorkOSRedirectController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
+
+Route::get('auth/workos/redirect', WorkOSRedirectController::class)
+    ->middleware(['guest', 'throttle:workos-auth'])
+    ->name('workos.redirect');
+
+Route::get('auth/workos/callback', WorkOSCallbackController::class)
+    ->middleware('throttle:workos-callback')
+    ->name('workos.callback');
+
+Route::post('auth/workos/confirm', WorkOSConfirmController::class)
+    ->middleware(['auth', 'verified', 'throttle:workos-confirm'])
+    ->name('workos.confirm');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('dashboard', 'pages::dashboard')->name('dashboard');

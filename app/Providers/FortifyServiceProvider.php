@@ -76,5 +76,17 @@ class FortifyServiceProvider extends ServiceProvider
                 ($credentialId ?: $request->session()->getId()).'|'.$request->ip(),
             );
         });
+
+        RateLimiter::for('workos-auth', fn (Request $request) => Limit::perMinute(10)
+            ->by($request->ip()));
+
+        RateLimiter::for('workos-callback', fn (Request $request) => Limit::perMinute(20)
+            ->by($request->session()->getId().'|'.$request->ip()));
+
+        RateLimiter::for('workos-link', fn (Request $request) => Limit::perMinute(5)
+            ->by(($request->user()?->getAuthIdentifier() ?? $request->ip()).'|'.$request->ip()));
+
+        RateLimiter::for('workos-confirm', fn (Request $request) => Limit::perMinute(5)
+            ->by(($request->user()?->getAuthIdentifier() ?? $request->ip()).'|'.$request->ip()));
     }
 }

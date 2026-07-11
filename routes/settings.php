@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\WorkOSLinkController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
@@ -16,6 +17,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'password.confirm',
         ])
         ->name('security.edit');
+
+    Route::post('settings/security/workos', WorkOSLinkController::class)
+        ->middleware([
+            'password.confirm',
+            'throttle:workos-link',
+        ])
+        ->name('workos.link');
 });
 
 Route::get('.well-known/passkey-endpoints', function () {

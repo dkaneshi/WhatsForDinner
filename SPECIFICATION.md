@@ -674,6 +674,7 @@ People may register or sign in with Google, GitHub, or Apple through WorkOS Auth
 - WhatsForDinner stores the stable WorkOS user ID, not provider access tokens or refresh tokens. WorkOS manages the provider identities linked to that WorkOS user.
 - Local name and email remain the application profile source of truth after account creation. Provider-driven profile changes do not silently overwrite local profile data.
 - Application logout invalidates the Laravel session. Global logout from WorkOS or the underlying social provider is out of scope.
+- A linked WorkOS identity is a valid step-up method for accessing password-confirmed areas. It must freshly reauthenticate the same WorkOS user and must not create, link, switch, or overwrite accounts during confirmation.
 
 #### Requirements
 
@@ -690,6 +691,7 @@ People may register or sign in with Google, GitHub, or Apple through WorkOS Auth
 - Add an authenticated account-linking action to Security settings. Require recent Fortify password or passkey confirmation, preserve the authenticated local user across the AuthKit round trip, validate the returned verified email against that user, and reject a WorkOS ID already linked to another local user.
 - After a successful callback, regenerate the Laravel session ID before redirecting. When the local user has TOTP enabled, defer final authentication until the existing two-factor challenge succeeds.
 - Add one hosted-social-login entry point to both login and registration views with accessible copy indicating Google, GitHub, and Apple. Preserve the current password and passkey controls.
+- Add WorkOS confirmation to Fortify's identity-confirmation view for linked users. Request AuthKit reauthentication with `max_age=0`, verify the returned WorkOS user ID matches the authenticated local user's stored WorkOS ID, verify the returned `auth_time` is fresh for the current confirmation attempt, then mark Laravel's session as password-confirmed and restore only the safe local intended destination.
 - Apply rate limiting to social-authentication initiation, callback failures, and linking attempts without counting successful provider redirects as password-login failures.
 - Show safe, actionable messages for cancellation, invalid or expired state, code-exchange failure, unverified email, local email collision, linking mismatch, and temporary WorkOS unavailability. Do not expose OAuth codes, tokens, provider payloads, or secrets in logs or validation messages.
 - Record sanitized authentication events for successful social registration, successful social sign-in, successful linking, rejected linking, email collision, and callback failure. Include local user ID and WorkOS user ID when known, but no tokens or authorization codes.
@@ -709,6 +711,7 @@ People may register or sign in with Google, GitHub, or Apple through WorkOS Auth
 - An authenticated user may link a previously unclaimed WorkOS identity only after security confirmation and only when its verified email matches the local verified email.
 - Linking rejects a mismatched email, an Apple private-relay email that differs from the local email, an unverified local or WorkOS email, and a WorkOS ID already linked to another user.
 - A linked user with Fortify TOTP enabled reaches and must complete the existing two-factor challenge before becoming authenticated.
+- A socially created user with no known local password can freshly confirm through the same linked WorkOS identity and access Security settings; stale authentication, a different WorkOS user, an unverified identity, a switched Laravel user, invalid state, and an external intended destination are rejected without marking the session confirmed.
 - Provider profile changes do not silently overwrite the local user's name or email on later sign-ins.
 - A malicious intended destination cannot redirect outside WhatsForDinner.
 - Rate limits apply to repeated initiation, callback failure, and linking abuse.

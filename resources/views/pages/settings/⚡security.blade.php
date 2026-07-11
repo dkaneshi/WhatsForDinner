@@ -188,6 +188,9 @@ new #[Title('Security settings')] class extends Component {
     <flux:heading class="sr-only">{{ __('Security settings') }}</flux:heading>
 
     <x-pages::settings.layout :heading="__('Update password')" :subheading="__('Ensure your account is using a long, random password to stay secure')">
+        <x-auth-session-status :status="session('status')" />
+        <flux:error name="workos" />
+
         <form method="POST" wire:submit="updatePassword" class="mt-6 space-y-6">
             <flux:input
                 wire:model="current_password"
@@ -222,6 +225,31 @@ new #[Title('Security settings')] class extends Component {
                 </flux:button>
             </div>
         </form>
+
+        <section class="mt-12">
+            <flux:heading>{{ __('Social sign-in') }}</flux:heading>
+            <flux:subheading>{{ __('Use Google, GitHub, or Apple as an additional way to sign in') }}</flux:subheading>
+
+            <div class="mt-6 flex flex-col items-start gap-4">
+                @if (auth()->user()->workos_user_id)
+                    <flux:badge color="green">{{ __('Linked') }}</flux:badge>
+                    <flux:text variant="subtle">
+                        {{ __('Your social identity is linked. WorkOS manages the providers attached to it.') }}
+                    </flux:text>
+                @else
+                    <flux:text variant="subtle">
+                        {{ __('The verified social account email must exactly match your verified WhatsForDinner email.') }}
+                    </flux:text>
+
+                    <form method="POST" action="{{ route('workos.link') }}">
+                        @csrf
+                        <flux:button type="submit" variant="outline" data-test="link-workos-button">
+                            {{ __('Link social sign-in') }}
+                        </flux:button>
+                    </form>
+                @endif
+            </div>
+        </section>
 
         {{-- @chisel-2fa --}}
         @if ($canManageTwoFactor)

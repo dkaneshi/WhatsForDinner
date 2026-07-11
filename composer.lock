@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7e8333e46f7207c4ba9f3cad33c28f63",
+    "content-hash": "16753dc7cda476adcfac53b07267a822",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -3435,6 +3435,226 @@
                 "source": "https://github.com/paragonie/constant_time_encoding"
             },
             "time": "2025-09-24T15:06:41+00:00"
+        },
+        {
+            "name": "paragonie/halite",
+            "version": "v5.1.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/paragonie/halite.git",
+                "reference": "12e7d1ab50ef3cacc27b59140e75d2cf59e85f71"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/paragonie/halite/zipball/12e7d1ab50ef3cacc27b59140e75d2cf59e85f71",
+                "reference": "12e7d1ab50ef3cacc27b59140e75d2cf59e85f71",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "paragonie/constant_time_encoding": "^2|^3",
+                "paragonie/hidden-string": "^1|^2",
+                "paragonie/sodium_compat": "^1|^2",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^9",
+                "vimeo/psalm": "^6.8"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "ParagonIE\\Halite\\": "./src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MPL-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Paragon Initiative Enterprises",
+                    "email": "info@paragonie.com",
+                    "homepage": "https://paragonie.com"
+                }
+            ],
+            "description": "High-level cryptography interface powered by libsodium",
+            "homepage": "https://github.com/paragonie/halite",
+            "keywords": [
+                "Argon2i",
+                "BLAKE",
+                "BLAKE2",
+                "BLAKE2b",
+                "Curve25519",
+                "Ed25519",
+                "X25519",
+                "Xsalsa20",
+                "argon2",
+                "cryptography",
+                "encryption",
+                "ext-sodium",
+                "hashing",
+                "libsodium",
+                "password",
+                "public-key",
+                "signatures",
+                "sodium"
+            ],
+            "support": {
+                "docs": "https://github.com/paragonie/halite/tree/master/doc",
+                "issues": "https://github.com/paragonie/halite/issues",
+                "source": "https://github.com/paragonie/halite/tree/v5.1.4"
+            },
+            "time": "2025-09-19T03:39:32+00:00"
+        },
+        {
+            "name": "paragonie/hidden-string",
+            "version": "v2.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/paragonie/hidden-string.git",
+                "reference": "87886ab8ed7abb61c8bcf8d67cd3d3527feedbf7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/paragonie/hidden-string/zipball/87886ab8ed7abb61c8bcf8d67cd3d3527feedbf7",
+                "reference": "87886ab8ed7abb61c8bcf8d67cd3d3527feedbf7",
+                "shasum": ""
+            },
+            "require": {
+                "paragonie/constant_time_encoding": "^2|^3",
+                "php": "^7.4|^8"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^9.5",
+                "vimeo/psalm": "^4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "ParagonIE\\HiddenString\\": "./src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MPL-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Paragon Initiative Enterprises",
+                    "email": "info@paragonie.com",
+                    "homepage": "https://paragonie.com"
+                }
+            ],
+            "description": "Encapsulate strings in an object to hide them from stack traces",
+            "homepage": "https://github.com/paragonie/hidden-string",
+            "keywords": [
+                "hidden",
+                "stack trace",
+                "string"
+            ],
+            "support": {
+                "issues": "https://github.com/paragonie/hidden-string/issues",
+                "source": "https://github.com/paragonie/hidden-string/tree/v2.2.0"
+            },
+            "time": "2024-05-08T12:45:06+00:00"
+        },
+        {
+            "name": "paragonie/sodium_compat",
+            "version": "v2.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/paragonie/sodium_compat.git",
+                "reference": "4714da6efdc782c06690bc72ce34fae7941c2d9f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/paragonie/sodium_compat/zipball/4714da6efdc782c06690bc72ce34fae7941c2d9f",
+                "reference": "4714da6efdc782c06690bc72ce34fae7941c2d9f",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.1",
+                "php-64bit": "*"
+            },
+            "require-dev": {
+                "infection/infection": "^0",
+                "nikic/php-fuzzer": "^0",
+                "phpunit/phpunit": "^7|^8|^9|^10|^11",
+                "vimeo/psalm": "^4|^5|^6"
+            },
+            "suggest": {
+                "ext-sodium": "Better performance, password hashing (Argon2i), secure memory management (memzero), and better security."
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.0.x-dev"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "autoload.php"
+                ],
+                "psr-4": {
+                    "ParagonIE\\Sodium\\": "namespaced/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "ISC"
+            ],
+            "authors": [
+                {
+                    "name": "Paragon Initiative Enterprises",
+                    "email": "security@paragonie.com"
+                },
+                {
+                    "name": "Frank Denis",
+                    "email": "jedisct1@pureftpd.org"
+                }
+            ],
+            "description": "Pure PHP implementation of libsodium; uses the PHP extension if it exists",
+            "keywords": [
+                "Authentication",
+                "BLAKE2b",
+                "ChaCha20",
+                "ChaCha20-Poly1305",
+                "Chapoly",
+                "Curve25519",
+                "Ed25519",
+                "EdDSA",
+                "Edwards-curve Digital Signature Algorithm",
+                "Elliptic Curve Diffie-Hellman",
+                "Poly1305",
+                "Pure-PHP cryptography",
+                "RFC 7748",
+                "RFC 8032",
+                "Salpoly",
+                "Salsa20",
+                "X25519",
+                "XChaCha20-Poly1305",
+                "XSalsa20-Poly1305",
+                "Xchacha20",
+                "Xsalsa20",
+                "aead",
+                "cryptography",
+                "ecdh",
+                "elliptic curve",
+                "elliptic curve cryptography",
+                "encryption",
+                "libsodium",
+                "php",
+                "public-key cryptography",
+                "secret-key cryptography",
+                "side-channel resistant"
+            ],
+            "support": {
+                "issues": "https://github.com/paragonie/sodium_compat/issues",
+                "source": "https://github.com/paragonie/sodium_compat/tree/v2.5.0"
+            },
+            "time": "2025-12-30T16:12:18+00:00"
         },
         {
             "name": "phpdocumentor/reflection-common",
@@ -7989,6 +8209,128 @@
                 "source": "https://github.com/webmozarts/assert/tree/2.4.1"
             },
             "time": "2026-06-15T15:31:57+00:00"
+        },
+        {
+            "name": "workos/workos-php",
+            "version": "v7.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/workos/workos-php.git",
+                "reference": "bc3ab81056ccea72d687d051a4eeba37b114d90c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/workos/workos-php/zipball/bc3ab81056ccea72d687d051a4eeba37b114d90c",
+                "reference": "bc3ab81056ccea72d687d051a4eeba37b114d90c",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "^8.2",
+                "guzzlehttp/guzzle": "^7.0",
+                "paragonie/halite": "^5.1",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.0",
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^11.5",
+                "saggre/phpdocumentor-markdown": "^1.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "WorkOS\\": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "WorkOS",
+                    "email": "sdk@workos.com"
+                }
+            ],
+            "description": "WorkOS PHP Library",
+            "homepage": "https://workos.com",
+            "support": {
+                "issues": "https://github.com/workos/workos-php/issues",
+                "source": "https://github.com/workos/workos-php/tree/v7.3.0"
+            },
+            "time": "2026-06-30T15:18:31+00:00"
+        },
+        {
+            "name": "workos/workos-php-laravel",
+            "version": "v8.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/workos/workos-php-laravel.git",
+                "reference": "93f0723f225e3203c730f6e1183f271e719aa570"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/workos/workos-php-laravel/zipball/93f0723f225e3203c730f6e1183f271e719aa570",
+                "reference": "93f0723f225e3203c730f6e1183f271e719aa570",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^12.0|^13.0",
+                "illuminate/support": "^12.0|^13.0",
+                "php": ">=8.2.0",
+                "workos/workos-php": "^7.0.1"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.64",
+                "orchestra/testbench": "^10.0|^11.0",
+                "phpunit/phpunit": "^11.0 || ^12.0 || ^13.0"
+            },
+            "suggest": {
+                "laravel/framework": "For testing"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "WorkOS": "WorkOS\\Laravel\\Facades\\WorkOS"
+                    },
+                    "providers": [
+                        "WorkOS\\Laravel\\WorkOSServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "lib/helpers.php"
+                ],
+                "psr-4": {
+                    "WorkOS\\Laravel\\": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "WorkOS",
+                    "email": "support@workos.com"
+                }
+            ],
+            "description": "WorkOS PHP Library for Laravel",
+            "keywords": [
+                "SSO",
+                "laravel",
+                "laravel 12",
+                "laravel 13",
+                "sdk",
+                "workos"
+            ],
+            "support": {
+                "issues": "https://github.com/workos/workos-php-laravel/issues",
+                "source": "https://github.com/workos/workos-php-laravel/tree/v8.0.0"
+            },
+            "time": "2026-06-22T21:05:20+00:00"
         }
     ],
     "packages-dev": [
