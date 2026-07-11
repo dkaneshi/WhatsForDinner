@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WhatsForDinner — WorkOS Production Cutover Runbook</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --background: #f7f2e8;
+            --surface: #fffdf8;
+            --surface-muted: #f1eadc;
+            --text: #2f281f;
+            --muted: #6d6255;
+            --border: #d8cbb9;
+            --accent: #b4532a;
+            --accent-dark: #843a1d;
+            --success: #436341;
+            --warning: #8a5a12;
+            --danger: #9f2f2f;
+            --code: #28231d;
+            --code-text: #fff8eb;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--background);
+            color: var(--text);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            line-height: 1.55;
+        }
+
+        main {
+            width: min(1100px, calc(100% - 2rem));
+            margin: 2rem auto 5rem;
+        }
+
+        header, section {
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            background: var(--surface);
+            box-shadow: 0 8px 24px rgb(75 52 30 / 8%);
+        }
+
+        header { padding: clamp(1.5rem, 4vw, 3rem); }
+        section { margin-top: 1.25rem; padding: clamp(1.25rem, 3vw, 2rem); }
+
+        h1, h2, h3 { line-height: 1.2; }
+        h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.5rem); letter-spacing: -0.04em; }
+        h2 { margin: 0 0 1rem; font-size: 1.45rem; color: var(--accent-dark); }
+        h3 { margin: 1.5rem 0 0.65rem; font-size: 1.05rem; }
+        p { margin: 0.6rem 0; }
+        a { color: var(--accent-dark); }
+
+        .eyebrow {
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .lede { max-width: 72ch; color: var(--muted); font-size: 1.05rem; }
+
+        .metadata, .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.8rem 1.25rem;
+        }
+
+        .metadata { margin-top: 1.5rem; }
+
+        .field {
+            min-height: 3.25rem;
+            padding: 0.65rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 0.6rem;
+            background: var(--surface-muted);
+        }
+
+        .field strong { display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--muted); }
+
+        .callout {
+            margin: 1rem 0;
+            padding: 0.9rem 1rem;
+            border-left: 0.3rem solid var(--warning);
+            border-radius: 0.35rem;
+            background: color-mix(in srgb, var(--warning) 8%, var(--surface));
+        }
+
+        .callout.danger { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 7%, var(--surface)); }
+        .callout.success { border-color: var(--success); background: color-mix(in srgb, var(--success) 7%, var(--surface)); }
+
+        ol, ul { padding-left: 1.35rem; }
+        li + li { margin-top: 0.4rem; }
+
+        .checklist { list-style: none; padding: 0; }
+        .checklist li {
+            display: grid;
+            grid-template-columns: 1.3rem 1fr;
+            gap: 0.65rem;
+            align-items: start;
+            padding: 0.55rem 0;
+            border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+        }
+        .checklist li:last-child { border-bottom: 0; }
+        input[type="checkbox"] { width: 1.05rem; height: 1.05rem; margin: 0.23rem 0 0; accent-color: var(--accent); }
+
+        table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; }
+        th, td { padding: 0.65rem; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+        th { background: var(--surface-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+
+        pre {
+            overflow-x: auto;
+            padding: 1rem;
+            border-radius: 0.65rem;
+            background: var(--code);
+            color: var(--code-text);
+            font-size: 0.86rem;
+            line-height: 1.5;
+        }
+
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+        :not(pre) > code { padding: 0.12rem 0.3rem; border-radius: 0.3rem; background: var(--surface-muted); }
+
+        .phase {
+            display: inline-block;
+            margin-bottom: 0.65rem;
+            padding: 0.22rem 0.55rem;
+            border-radius: 999px;
+            background: var(--accent);
+            color: white;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .signoff td { height: 3.5rem; }
+        footer { margin-top: 1.25rem; text-align: center; color: var(--muted); font-size: 0.82rem; }
+
+        @media (max-width: 720px) {
+            .metadata, .grid { grid-template-columns: 1fr; }
+            table { display: block; overflow-x: auto; }
+        }
+
+        @media print {
+            :root { color-scheme: light; }
+            body { background: white; font-size: 10pt; }
+            main { width: 100%; margin: 0; }
+            header, section { break-inside: avoid; box-shadow: none; border-radius: 0; }
+            section { margin-top: 0.35in; }
+            a { color: inherit; text-decoration: none; }
+            pre { white-space: pre-wrap; }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <header>
+        <div class="eyebrow">Controlled production cutover</div>
+        <h1>WorkOS Social Login</h1>
+        <p class="lede">Operational runbook for launching Google, GitHub, and Apple authentication in WhatsForDinner while preserving Laravel Fortify password, passkey, email-verification, and TOTP flows.</p>
+
+        <div class="metadata">
+            <div class="field"><strong>Production URL</strong>________________________________</div>
+            <div class="field"><strong>Cutover date/time</strong>________________________________</div>
+            <div class="field"><strong>Release/commit</strong>________________________________</div>
+            <div class="field"><strong>Cutover owner</strong>________________________________</div>
+            <div class="field"><strong>WorkOS owner</strong>________________________________</div>
+            <div class="field"><strong>Rollback owner</strong>________________________________</div>
+        </div>
+    </header>
+
+    <section id="principles">
+        <span class="phase">Read first</span>
+        <h2>Launch principles</h2>
+        <div class="callout danger"><strong>Never promote staging WorkOS identities.</strong> Production and staging are isolated. Do not copy staging <code>workos_user_id</code> values, API keys, client IDs, users, provider connections, or sessions into production.</div>
+        <ul>
+            <li>The production callback must be one exact HTTPS URL on a controlled domain.</li>
+            <li>The WorkOS production API key belongs only in the production secret manager.</li>
+            <li>Existing production users begin with a null <code>workos_user_id</code> and link explicitly.</li>
+            <li>The nullable database column may remain after an application rollback.</li>
+            <li>Keep existing Fortify authentication available throughout the launch.</li>
+        </ul>
+    </section>
+
+    <section id="go-no-go">
+        <span class="phase">Gate 0</span>
+        <h2>Go/no-go prerequisites</h2>
+        <ul class="checklist">
+            <li><input type="checkbox" aria-label="Reviewed and committed release"><span>The implementation is reviewed, committed, pushed, and identified by a release tag or immutable commit.</span></li>
+            <li><input type="checkbox" aria-label="Automated checks passed"><span>Automated tests, PHPStan, Pint, frontend build, and dependency audit pass for the release candidate.</span></li>
+            <li><input type="checkbox" aria-label="Staging journeys passed"><span>Google, GitHub, Apple, account linking, cancellation, TOTP, and WorkOS step-up confirmation pass end to end in staging.</span></li>
+            <li><input type="checkbox" aria-label="Production HTTPS ready"><span>Production DNS and TLS are active and <code>APP_URL</code> uses the final HTTPS origin.</span></li>
+            <li><input type="checkbox" aria-label="Database backup ready"><span>A restorable production database backup exists and its restoration procedure is known.</span></li>
+            <li><input type="checkbox" aria-label="Rollback release ready"><span>The prior known-good application release is available for immediate redeployment.</span></li>
+            <li><input type="checkbox" aria-label="Owners available"><span>Application, database, WorkOS, and rollback owners are present for the cutover window.</span></li>
+        </ul>
+        <div class="callout"><strong>No-go:</strong> stop if any prerequisite is incomplete. Do not compensate by pointing production at the staging WorkOS environment.</div>
+    </section>
+
+    <section id="workos-production">
+        <span class="phase">Phase 1</span>
+        <h2>Prepare WorkOS Production</h2>
+        <ol>
+            <li>Open the production environment in the WorkOS Dashboard and unlock it with billing information.</li>
+            <li>Create the production application or select its default application.</li>
+            <li>Generate the production API key. Save it immediately; production keys are displayed once.</li>
+            <li>Record the production Client ID.</li>
+            <li>Add the exact redirect URI below and make it the application default:</li>
+        </ol>
+        <pre><code>https://YOUR-PRODUCTION-DOMAIN/auth/workos/callback</code></pre>
+        <ul class="checklist">
+            <li><input type="checkbox" aria-label="Production unlocked"><span>Production environment unlocked.</span></li>
+            <li><input type="checkbox" aria-label="Production key saved"><span>API key stored in the production secret manager and nowhere else.</span></li>
+            <li><input type="checkbox" aria-label="Client ID recorded"><span>Production Client ID recorded.</span></li>
+            <li><input type="checkbox" aria-label="Redirect configured"><span>Exact HTTPS callback configured with no production wildcard.</span></li>
+            <li><input type="checkbox" aria-label="Homepage configured"><span>Production application homepage points to the correct HTTPS origin.</span></li>
+            <li><input type="checkbox" aria-label="Branding checked"><span>Production logo, colors, support links, and displayed application name are correct.</span></li>
+        </ul>
+    </section>
+
+    <section id="session-policy">
+        <span class="phase">Phase 2</span>
+        <h2>Configure the AuthKit session policy</h2>
+        <p>In WorkOS Production → Applications → WhatsForDinner → Sessions, use these initial values:</p>
+        <table>
+            <thead><tr><th>Setting</th><th>Initial value</th><th>Purpose</th></tr></thead>
+            <tbody>
+            <tr><td>Maximum session length</td><td><strong>7 days</strong></td><td>Hard limit before AuthKit requires authentication again.</td></tr>
+            <tr><td>Inactivity timeout</td><td><strong>24 hours</strong></td><td>Expires an AuthKit session that has not been used.</td></tr>
+            <tr><td>Access token duration</td><td><strong>5 minutes</strong></td><td>Limits the callback token used immediately by WhatsForDinner.</td></tr>
+            </tbody>
+        </table>
+        <div class="callout"><strong>Important:</strong> the Laravel session remains the application authorization session. WorkOS expiry does not currently revoke an already-running Laravel session. Security settings still force fresh AuthKit reauthentication with <code>max_age=0</code> and validate <code>auth_time</code>.</div>
+        <ul class="checklist">
+            <li><input type="checkbox" aria-label="Maximum session configured"><span>Maximum session length configured.</span></li>
+            <li><input type="checkbox" aria-label="Inactivity timeout configured"><span>Inactivity timeout configured.</span></li>
+            <li><input type="checkbox" aria-label="Access token configured"><span>Access-token duration configured.</span></li>
+            <li><input type="checkbox" aria-label="Session policy recorded"><span>Final values recorded in the change ticket and monitoring plan.</span></li>
+        </ul>
+    </section>
+
+    <section id="providers">
+        <span class="phase">Phase 3</span>
+        <h2>Configure production OAuth providers</h2>
+        <h3>Google</h3>
+        <ul class="checklist">
+            <li><input type="checkbox" aria-label="Google app production ready"><span>Production OAuth application, consent screen, branding, authorized domains, Client ID, and Client Secret configured.</span></li>
+            <li><input type="checkbox" aria-label="Google redirect configured"><span>The redirect URI supplied by WorkOS is registered at Google exactly.</span></li>
+            <li><input type="checkbox" aria-label="Google enabled"><span>Google enabled in WorkOS Production.</span></li>
+        </ul>
+
+        <h3>GitHub</h3>
+        <ul class="checklist">
+            <li><input type="checkbox" aria-label="GitHub app production ready"><span>Production GitHub OAuth application has the correct homepage, callback supplied by WorkOS, Client ID, and Client Secret.</span></li>
+            <li><input type="checkbox" aria-label="GitHub enabled"><span>GitHub enabled in WorkOS Production.</span></li>
+        </ul>
+
+        <h3>Apple</h3>
+        <ul class="checklist">
+            <li><input type="checkbox" aria-label="Apple credentials ready"><span>Apple Team ID, Service ID, private key, and key ID created for production.</span></li>
+            <li><input type="checkbox" aria-label="Apple redirect ready"><span>The WorkOS-provided Apple redirect URI is registered in Apple Developer.</span></li>
+            <li><input type="checkbox" aria-label="Apple relay ready"><span>WorkOS outbound email domains are registered as Apple Private Email Relay sources.</span></li>
+            <li><input type="checkbox" aria-label="Apple enabled"><span>Apple enabled in WorkOS Production using the application's credentials.</span></li>
+        </ul>
+        <div class="callout">Do not launch Apple until relay-address email delivery is verified. Hidden-email users may authenticate even when invitations and password-reset messages cannot reach them.</div>
+    </section>
+
+    <section id="secrets">
+        <span class="phase">Phase 4</span>
+        <h2>Configure the production application</h2>
+        <pre><code>APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://YOUR-PRODUCTION-DOMAIN
+
+WORKOS_API_KEY=sk_prod_...
+WORKOS_CLIENT_ID=client_prod_...
+WORKOS_REDIRECT_URI=https://YOUR-PRODUCTION-DOMAIN/auth/workos/callback
+
+SESSION_LIFETIME=120
+SESSION_SECURE_COOKIE=true
+SESSION_HTTP_ONLY=true
+SESSION_SAME_SITE=lax</code></pre>
+        <ul class="checklist">
+            <li><input type="checkbox" aria-label="Application environment set"><span>Production environment and HTTPS application URL set.</span></li>
+            <li><input type="checkbox" aria-label="WorkOS secrets set"><span>Production WorkOS API key, Client ID, and callback set in the secret manager.</span></li>
+            <li><input type="checkbox" aria-label="Session security set"><span>Secure, HTTP-only, same-site session cookie settings confirmed.</span></li>
+            <li><input type="checkbox" aria-label="Stable encryption keys"><span>Existing production <code>APP_KEY</code> and <code>PASSKEYS_USER_HANDLE_SECRET</code> preserved.</span></li>
+            <li><input type="checkbox" aria-label="No staging secrets"><span>No staging WorkOS or provider credential is present in production.</span></li>
+        </ul>
+    </section>
+
+    <section id="data">
+        <span class="phase">Gate 1</span>
+        <h2>Validate production data isolation</h2>
+        <ul class="checklist">
+            <li><input type="checkbox" aria-label="No staging user IDs"><span>No staging <code>workos_user_id</code> value is present in the production database.</span></li>
+            <li><input type="checkbox" aria-label="Existing production users remain unlinked"><span>Existing production users remain unlinked until they complete the explicit linking flow.</span></li>
+            <li><input type="checkbox" aria-label="Test accounts removed"><span>Development and staging test accounts are absent from production.</span></li>
+            <li><input type="checkbox" aria-label="Backup verified"><span>Final pre-deploy backup completed and timestamp recorded: ________________________________</span></li>
+        </ul>
+    </section>
+
+    <section id="deployment">
+        <span class="phase">Phase 5</span>
+        <h2>Deploy in controlled order</h2>
+        <ol>
+            <li>Place the application in the platform's maintenance or controlled-release state if atomic migration-before-traffic is unavailable.</li>
+            <li>Deploy the reviewed immutable release.</li>
+            <li>Install production dependencies and build assets.</li>
+            <li>Run the database migration before the new UI receives traffic.</li>
+            <li>Rebuild Laravel caches and restart long-running workers.</li>
+            <li>Restore controlled access for smoke testing.</li>
+        </ol>
+        <pre><code>composer install --no-dev --classmap-authoritative
+npm ci
+npm run build
+php artisan migrate --force
+php artisan optimize
+php artisan queue:restart</code></pre>
+        <ul class="checklist">
+            <li><input type="checkbox" aria-label="Release deployed"><span>Application release deployed successfully.</span></li>
+            <li><input type="checkbox" aria-label="Migration completed"><span><code>workos_user_id</code> migration completed successfully.</span></li>
+            <li><input type="checkbox" aria-label="Caches rebuilt"><span>Laravel production caches rebuilt.</span></li>
+            <li><input type="checkbox" aria-label="Workers restarted"><span>Long-running workers restarted.</span></li>
+            <li><input type="checkbox" aria-label="Health checks green"><span>Application, database, cache, queue, and mail health checks green.</span></li>
+        </ul>
+    </section>
+
+    <section id="smoke-tests">
+        <span class="phase">Gate 2</span>
+        <h2>Production smoke-test matrix</h2>
+        <p>Use controlled production test accounts. Record evidence without storing tokens, authorization codes, API keys, or provider payloads.</p>
+        <table>
+            <thead><tr><th>Journey</th><th>Expected result</th><th>Result / evidence</th></tr></thead>
+            <tbody>
+            <tr><td>Existing password login</td><td>Normal Fortify login succeeds.</td><td>________________</td></tr>
+            <tr><td>Passkey login and confirmation</td><td>Both ceremonies succeed on the production origin.</td><td>________________</td></tr>
+            <tr><td>TOTP and recovery code</td><td>Challenge is enforced and recovery code is single-use.</td><td>________________</td></tr>
+            <tr><td>New Google registration</td><td>Verified local user created and dashboard reached.</td><td>________________</td></tr>
+            <tr><td>New GitHub registration</td><td>Verified local user created and dashboard reached.</td><td>________________</td></tr>
+            <tr><td>New Apple registration</td><td>Verified local user created; relay choice handled.</td><td>________________</td></tr>
+            <tr><td>Existing-email collision</td><td>No silent link or duplicate; guidance is displayed.</td><td>________________</td></tr>
+            <tr><td>Explicit account linking</td><td>Only the matching verified identity links.</td><td>________________</td></tr>
+            <tr><td>Social-only Security access</td><td>Fresh WorkOS step-up confirms identity and returns to Security.</td><td>________________</td></tr>
+            <tr><td>Provider cancellation</td><td>User remains safe and receives a recoverable message.</td><td>________________</td></tr>
+            <tr><td>Family invitation</td><td>Invited social user can accept only under the invited email.</td><td>________________</td></tr>
+            <tr><td>Apple relay email</td><td>Invitation and password-reset email reaches relay inbox.</td><td>________________</td></tr>
+            <tr><td>Phone and desktop</td><td>Login, callback errors, and confirmation UI remain accessible.</td><td>________________</td></tr>
+            </tbody>
+        </table>
+        <div class="callout danger"><strong>No-go:</strong> do not open public access if any core provider, legacy Fortify method, explicit linking, step-up confirmation, or callback safety test fails.</div>
+    </section>
+
+    <section id="launch">
+        <span class="phase">Phase 6</span>
+        <h2>Open access and monitor</h2>
+        <ul class="checklist">
+            <li><input type="checkbox" aria-label="Public access open"><span>Public access or release flag enabled.</span></li>
+            <li><input type="checkbox" aria-label="Logs monitored"><span>Laravel callback failures, identity mismatches, collision notices, and HTTP 429 responses monitored.</span></li>
+            <li><input type="checkbox" aria-label="WorkOS monitored"><span>WorkOS Production Users and Sessions monitored for expected creation and provider methods.</span></li>
+            <li><input type="checkbox" aria-label="Mail monitored"><span>Invitation, verification, reset, and Apple relay email delivery monitored.</span></li>
+            <li><input type="checkbox" aria-label="Support informed"><span>Support owner has collision, linking, cancellation, and provider-outage guidance.</span></li>
+        </ul>
+        <h3>Monitoring cadence</h3>
+        <div class="grid">
+            <div class="field"><strong>First 30 minutes</strong>Continuous log and WorkOS session review</div>
+            <div class="field"><strong>First 4 hours</strong>Review every 30 minutes</div>
+            <div class="field"><strong>First 24 hours</strong>Review at 8 and 24 hours</div>
+            <div class="field"><strong>First 7 days</strong>Daily provider and support review</div>
+        </div>
+    </section>
+
+    <section id="rollback">
+        <span class="phase">Rollback</span>
+        <h2>Rollback triggers and procedure</h2>
+        <h3>Trigger rollback when</h3>
+        <ul>
+            <li>Existing password, passkey, TOTP, or recovery-code login is impaired.</li>
+            <li>Users are linked to the wrong local account or can bypass explicit linking.</li>
+            <li>Security confirmation can be bypassed or confirms a different identity.</li>
+            <li>Callbacks permit external redirects, replay, or state mismatch.</li>
+            <li>Provider failures create widespread login denial without an acceptable fallback.</li>
+            <li>Sensitive credentials, tokens, or authorization codes appear in logs or responses.</li>
+        </ul>
+        <h3>Procedure</h3>
+        <ol>
+            <li>Declare rollback and timestamp it: ________________________________</li>
+            <li>Disable affected OAuth providers in WorkOS Production if provider-specific containment is sufficient.</li>
+            <li>Redeploy the previous known-good application release.</li>
+            <li>Do not roll back the nullable <code>workos_user_id</code> migration during the incident; older code safely ignores it.</li>
+            <li>Preserve logs and database evidence without copying secrets or tokens into the incident record.</li>
+            <li>Verify existing Fortify login, dashboard access, and logout after rollback.</li>
+            <li>Notify stakeholders and open an incident review before retrying launch.</li>
+        </ol>
+    </section>
+
+    <section id="signoff">
+        <span class="phase">Gate 3</span>
+        <h2>Final sign-off</h2>
+        <table class="signoff">
+            <thead><tr><th>Role</th><th>Name</th><th>Decision</th><th>Time</th></tr></thead>
+            <tbody>
+            <tr><td>Application owner</td><td></td><td>Go / No-go</td><td></td></tr>
+            <tr><td>WorkOS/provider owner</td><td></td><td>Go / No-go</td><td></td></tr>
+            <tr><td>Database/operations owner</td><td></td><td>Go / No-go</td><td></td></tr>
+            <tr><td>Rollback owner</td><td></td><td>Go / No-go</td><td></td></tr>
+            </tbody>
+        </table>
+        <div class="callout success"><strong>Launch complete only when:</strong> all gates are signed, all smoke tests pass, monitoring is active, and rollback ownership remains available through the agreed observation window.</div>
+    </section>
+
+    <section id="references">
+        <h2>Authoritative references</h2>
+        <ul>
+            <li><a href="https://workos.com/docs/authkit/environments">WorkOS staging and production environments</a></li>
+            <li><a href="https://workos.com/docs/authkit/sessions">AuthKit sessions</a></li>
+            <li><a href="https://workos.com/docs/authkit/reauthentication">AuthKit reauthentication</a></li>
+            <li><a href="https://workos.com/docs/authkit/social-login">AuthKit social login</a></li>
+            <li><a href="https://workos.com/docs/integrations/apple">Sign in with Apple and Private Email Relay</a></li>
+            <li><a href="https://workos.com/docs/reference/api-authentication">WorkOS API authentication</a></li>
+        </ul>
+    </section>
+
+    <footer>WhatsForDinner WorkOS production cutover runbook · Created July 11, 2026</footer>
+</main>
+</body>
+</html>
